@@ -133,6 +133,8 @@ app.get("/api/product/:barcode", async (req, res) => {
 // Save settings API
 app.post("/api/settings", async (req, res) => {
   try {
+    console.log("Received settings data:", req.body);
+
     const {
       dbServer,
       dbPort,
@@ -151,13 +153,28 @@ app.post("/api/settings", async (req, res) => {
       productsPrice3Column,
     } = req.body;
 
-    // In a real app, you'd validate these values
-    // Then save to .env file or database
+    // Validate required fields
+    if (!dbServer || !dbName || !dbUser || !dbPassword || !productsTable) {
+      return res.status(400).json({
+        status: "error",
+        message: "Missing required database connection information",
+      });
+    }
+
+    // For a real app, you might want to validate these values more thoroughly
+    // and save them to environment variables or a configuration database
 
     // For this example, we just return success
-    res.json({ status: "success", message: "Settings saved successfully" });
+    return res.json({
+      status: "success",
+      message: "Settings saved successfully",
+    });
   } catch (error) {
-    res.status(500).json({ status: "error", message: error.message });
+    console.error("Error saving settings:", error);
+    return res.status(500).json({
+      status: "error",
+      message: error.message || "Internal server error",
+    });
   }
 });
 
