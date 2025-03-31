@@ -9,14 +9,18 @@ const SettingsPage = () => {
   const [formData, setFormData] = useState({ ...settings });
   const [isLoading, setIsLoading] = useState(false);
   const [testResult, setTestResult] = useState(null);
-  const [saveError, setSaveError] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const formRef = useRef(null);
   const navigate = useNavigate();
 
-  // Reset error message when form changes
+  // Initialize with default PostgreSQL port if empty
   useEffect(() => {
-    setSaveError(null);
-  }, [formData]);
+    if (!formData.dbPort) {
+      setFormData((prev) => ({ ...prev, dbPort: "5432" }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on component mount
 
   // Handle form input changes
   const handleChange = (e) => {
@@ -32,24 +36,24 @@ const SettingsPage = () => {
     e.preventDefault();
     setIsLoading(true);
     setTestResult(null);
+    setErrorMessage("");
 
     try {
       const connectionData = {
         dbServer: formData.dbServer,
-        dbPort: formData.dbPort,
+        dbPort: formData.dbPort || "5432",
         dbName: formData.dbName,
         dbUser: formData.dbUser,
         dbPassword: formData.dbPassword,
       };
 
-      console.log("Testing connection with:", connectionData);
-      const result = await apiService.testConnection(connectionData);
+      // Using result indirectly through setTestResult
+      await apiService.testConnection(connectionData);
       setTestResult({
         success: true,
         message: "اتصال به دیتابیس با موفقیت انجام شد.",
       });
     } catch (error) {
-      console.error("Connection test failed:", error);
       setTestResult({
         success: false,
         message: `خطا در اتصال به دیتابیس: ${error.message || "خطای نامشخص"}`,
@@ -63,43 +67,32 @@ const SettingsPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setSaveError(null);
+    setErrorMessage("");
+    setSuccessMessage("");
 
     try {
-      console.log("Saving settings to context:", formData);
-      // First update the context (which also saves to localStorage)
+      // Save to context first (which saves to localStorage)
       updateSettings(formData);
 
-      try {
-        // Then try to save to backend
-        console.log("Attempting to save settings to backend");
-        await apiService.saveSettings(formData);
-        console.log("Backend save successful");
-      } catch (backendError) {
-        // If backend save fails, still proceed with the local storage
-        console.warn(
-          "Backend save failed, but continuing with localStorage only:",
-          backendError,
-        );
-      }
+      // Then save to backend
+      await apiService.saveSettings(formData);
 
-      // Show success message
-      alert("تنظیمات با موفقیت ذخیره شد.");
+      setSuccessMessage("تنظیمات با موفقیت ذخیره شد.");
 
-      // Use setTimeout to ensure the alert is shown before navigation
+      // Redirect after a short delay to show success message
       setTimeout(() => {
-        console.log("Navigating to home page");
         navigate("/");
-      }, 100);
+      }, 1500);
     } catch (error) {
-      console.error("Settings save error:", error);
-      setSaveError(`خطا در ذخیره تنظیمات: ${error.message || "خطای نامشخص"}`);
+      setErrorMessage(
+        `خطا در ذخیره تنظیمات: ${error.message || "خطای نامشخص"}`,
+      );
+      // Keep settings in localStorage even if backend save fails
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Skip to beginning of form content
   return (
     <div className="container mx-auto p-4" style={{ direction: "rtl" }}>
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -107,9 +100,15 @@ const SettingsPage = () => {
           تنظیمات اتصال به دیتابیس
         </h2>
 
-        {saveError && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-            {saveError}
+        {successMessage && (
+          <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4">
+            {successMessage}
+          </div>
+        )}
+
+        {errorMessage && (
+          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4">
+            {errorMessage}
           </div>
         )}
 
@@ -117,7 +116,7 @@ const SettingsPage = () => {
           {/* Database Connection Settings */}
           <div className="border-b border-gray-200 pb-6 mb-6">
             <h3 className="text-lg font-semibold mb-4 text-gray-700">
-              اطلاعات اولیه دیتابیس
+              اطلاعات اولیه دیتابیس PostgreSQL
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -126,7 +125,7 @@ const SettingsPage = () => {
                   className="block text-gray-700 text-sm font-bold mb-2"
                   htmlFor="dbServer"
                 >
-                  آیپی
+                  آیپی / هاست
                 </label>
                 <input
                   type="text"
@@ -135,7 +134,7 @@ const SettingsPage = () => {
                   value={formData.dbServer}
                   onChange={handleChange}
                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  placeholder="192.168.1.1"
+                  placeholder="localhost"
                   required
                 />
               </div>
@@ -154,7 +153,7 @@ const SettingsPage = () => {
                   value={formData.dbPort}
                   onChange={handleChange}
                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  placeholder="1433"
+                  placeholder="5432"
                 />
               </div>
 
@@ -172,6 +171,7 @@ const SettingsPage = () => {
                   value={formData.dbName}
                   onChange={handleChange}
                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  placeholder="barcode_scanner"
                   required
                 />
               </div>
@@ -190,6 +190,7 @@ const SettingsPage = () => {
                   value={formData.dbUser}
                   onChange={handleChange}
                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  placeholder="postgres"
                   required
                 />
               </div>
@@ -233,10 +234,217 @@ const SettingsPage = () => {
             </div>
           </div>
 
-          {/* Rest of the form remains the same - keeping it for brevity */}
-          {/* ... */}
+          {/* Barcode Table Settings */}
+          <div className="border-b border-gray-200 pb-6 mb-6">
+            <h3 className="text-lg font-semibold mb-4 text-gray-700">
+              اطلاعات جدول بارکد
+            </h3>
 
-          <div className="mt-6 flex justify-end">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label
+                  className="block text-gray-700 text-sm font-bold mb-2"
+                  htmlFor="barcodeTable"
+                >
+                  نام جدول
+                </label>
+                <input
+                  type="text"
+                  id="barcodeTable"
+                  name="barcodeTable"
+                  value={formData.barcodeTable}
+                  onChange={handleChange}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  placeholder="barcodes"
+                />
+              </div>
+
+              <div>
+                <label
+                  className="block text-gray-700 text-sm font-bold mb-2"
+                  htmlFor="barcodeColumn"
+                >
+                  نام ستون بارکد
+                </label>
+                <input
+                  type="text"
+                  id="barcodeColumn"
+                  name="barcodeColumn"
+                  value={formData.barcodeColumn}
+                  onChange={handleChange}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  placeholder="barcode"
+                />
+              </div>
+
+              <div>
+                <label
+                  className="block text-gray-700 text-sm font-bold mb-2"
+                  htmlFor="productCodeColumn"
+                >
+                  نام ستون کدمحصول
+                </label>
+                <input
+                  type="text"
+                  id="productCodeColumn"
+                  name="productCodeColumn"
+                  value={formData.productCodeColumn}
+                  onChange={handleChange}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  placeholder="product_code"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Products Table Settings */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4 text-gray-700">
+              اطلاعات جدول محصولات
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label
+                  className="block text-gray-700 text-sm font-bold mb-2"
+                  htmlFor="productsTable"
+                >
+                  نام جدول
+                </label>
+                <input
+                  type="text"
+                  id="productsTable"
+                  name="productsTable"
+                  value={formData.productsTable}
+                  onChange={handleChange}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  placeholder="products"
+                  required
+                />
+              </div>
+
+              <div>
+                <label
+                  className="block text-gray-700 text-sm font-bold mb-2"
+                  htmlFor="productsCodeColumn"
+                >
+                  نام ستون کدمحصول
+                </label>
+                <input
+                  type="text"
+                  id="productsCodeColumn"
+                  name="productsCodeColumn"
+                  value={formData.productsCodeColumn}
+                  onChange={handleChange}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  placeholder="product_code"
+                  required
+                />
+              </div>
+
+              <div>
+                <label
+                  className="block text-gray-700 text-sm font-bold mb-2"
+                  htmlFor="productsNameColumn"
+                >
+                  نام ستون اسم محصول
+                </label>
+                <input
+                  type="text"
+                  id="productsNameColumn"
+                  name="productsNameColumn"
+                  value={formData.productsNameColumn}
+                  onChange={handleChange}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  placeholder="product_name"
+                  required
+                />
+              </div>
+
+              <div>
+                <label
+                  className="block text-gray-700 text-sm font-bold mb-2"
+                  htmlFor="productsImageColumn"
+                >
+                  نام ستون عکس محصول
+                </label>
+                <input
+                  type="text"
+                  id="productsImageColumn"
+                  name="productsImageColumn"
+                  value={formData.productsImageColumn}
+                  onChange={handleChange}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  placeholder="product_image"
+                />
+              </div>
+
+              <div>
+                <label
+                  className="block text-gray-700 text-sm font-bold mb-2"
+                  htmlFor="productsPrice1Column"
+                >
+                  نام ستون تیپ قیمت 1
+                </label>
+                <input
+                  type="text"
+                  id="productsPrice1Column"
+                  name="productsPrice1Column"
+                  value={formData.productsPrice1Column}
+                  onChange={handleChange}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  placeholder="price1"
+                  required
+                />
+              </div>
+
+              <div>
+                <label
+                  className="block text-gray-700 text-sm font-bold mb-2"
+                  htmlFor="productsPrice2Column"
+                >
+                  نام ستون تیپ قیمت 2
+                </label>
+                <input
+                  type="text"
+                  id="productsPrice2Column"
+                  name="productsPrice2Column"
+                  value={formData.productsPrice2Column}
+                  onChange={handleChange}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  placeholder="price2"
+                />
+              </div>
+
+              <div>
+                <label
+                  className="block text-gray-700 text-sm font-bold mb-2"
+                  htmlFor="productsPrice3Column"
+                >
+                  نام ستون تیپ قیمت 3
+                </label>
+                <input
+                  type="text"
+                  id="productsPrice3Column"
+                  name="productsPrice3Column"
+                  value={formData.productsPrice3Column}
+                  onChange={handleChange}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  placeholder="price3"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-between">
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            >
+              بازگشت
+            </button>
+
             <button
               type="submit"
               disabled={isLoading}
@@ -246,6 +454,44 @@ const SettingsPage = () => {
             </button>
           </div>
         </form>
+      </div>
+
+      {/* Default Settings Section */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-xl font-bold mb-4 text-gray-800">
+          تنظیمات پیش‌فرض PostgreSQL
+        </h2>
+
+        <div className="bg-blue-50 p-4 rounded-lg mb-4">
+          <h3 className="font-semibold text-blue-800 mb-2">
+            اطلاعات نمونه برای اتصال به دیتابیس:
+          </h3>
+          <ul className="list-disc list-inside space-y-1 text-gray-700">
+            <li>آدرس: localhost</li>
+            <li>پورت: 5432</li>
+            <li>نام دیتابیس: barcode_scanner</li>
+            <li>یوزر: postgres</li>
+            <li>پسورد: (پسورد PostgreSQL خود را وارد کنید)</li>
+          </ul>
+        </div>
+
+        <div className="bg-blue-50 p-4 rounded-lg">
+          <h3 className="font-semibold text-blue-800 mb-2">
+            تنظیمات پیشنهادی جداول:
+          </h3>
+          <ul className="list-disc list-inside space-y-1 text-gray-700">
+            <li>نام جدول بارکد: barcodes</li>
+            <li>نام ستون بارکد: barcode</li>
+            <li>نام ستون کد محصول (در جدول بارکد): product_code</li>
+            <li>نام جدول محصولات: products</li>
+            <li>نام ستون کد محصول: product_code</li>
+            <li>نام ستون نام محصول: product_name</li>
+            <li>نام ستون تصویر محصول: product_image</li>
+            <li>نام ستون قیمت 1: price1</li>
+            <li>نام ستون قیمت 2: price2</li>
+            <li>نام ستون قیمت 3: price3</li>
+          </ul>
+        </div>
       </div>
     </div>
   );

@@ -7,26 +7,18 @@ import { apiService } from "../services/api";
 import { useNavigate } from "react-router-dom";
 
 const ScannerPage = () => {
-  const { settings } = useContext(SettingsContext);
+  const { settings, isLoaded } = useContext(SettingsContext);
   const [product, setProduct] = useState(null);
   const [error, setError] = useState("");
   const [priceType, setPriceType] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [lastScannedBarcode, setLastScannedBarcode] = useState("");
+  const [lastScannedTimestamp, setLastScannedTimestamp] = useState(0);
   const navigate = useNavigate();
-  console.log("dbServer", settings.dbServer);
-  console.log("dbName", settings.dbName);
-  console.log("dbUser", settings.dbUser);
-  console.log("dbPassword", settings.dbPassword);
-  console.log("productsTable", settings.productsTable);
 
   // Function to check if settings are configured
   const areSettingsConfigured = useCallback(() => {
-    console.log("dbServer", settings.dbServer);
-    console.log("dbName", settings.dbName);
-    console.log("dbUser", settings.dbUser);
-    console.log("dbPassword", settings.dbPassword);
-    console.log("productsTable", settings.productsTable);
+    if (!isLoaded) return false; // Don't check until settings are loaded
 
     return (
       settings.dbServer &&
@@ -35,14 +27,14 @@ const ScannerPage = () => {
       settings.dbPassword &&
       settings.productsTable
     );
-  }, [settings]);
+  }, [settings, isLoaded]);
 
   // Redirect to settings page if not configured
   useEffect(() => {
-    if (!areSettingsConfigured()) {
+    if (isLoaded && !areSettingsConfigured()) {
       navigate("/settings");
     }
-  }, [areSettingsConfigured, navigate]);
+  }, [areSettingsConfigured, navigate, isLoaded]);
 
   // Handle keyboard input for price type selection
   useEffect(() => {
@@ -64,7 +56,7 @@ const ScannerPage = () => {
 
   // Handle barcode scan
   const handleBarcodeScanned = async (barcode) => {
-    // Prevent duplicate scans in quick succession
+    // Prevent duplicate scans in quick succession (within 2 seconds)
     if (
       barcode === lastScannedBarcode &&
       Date.now() - lastScannedTimestamp < 2000
@@ -99,9 +91,16 @@ const ScannerPage = () => {
     setPriceType(type);
   };
 
-  // State to track last scan timestamp
-  const [lastScannedTimestamp, setLastScannedTimestamp] = useState(0);
+  // If settings aren't loaded yet, show loading indicator
+  if (!isLoaded) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
+  // If settings aren't configured, show message
   if (!areSettingsConfigured()) {
     return (
       <div className="p-4">
@@ -134,6 +133,7 @@ const ScannerPage = () => {
       ) : error ? (
         <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
           <p>{error}</p>
+          <p className="mt-2 text-sm">بارکد: {lastScannedBarcode}</p>
         </div>
       ) : (
         <ProductDisplay
@@ -151,6 +151,13 @@ const ScannerPage = () => {
           <li>کلید 2 را برای قیمت نوع 2 فشار دهید</li>
           <li>کلید 3 را برای قیمت نوع 3 فشار دهید</li>
         </ul>
+      </div>
+
+      {/* Database connection info */}
+      <div className="mt-4 p-2 text-xs text-right text-gray-500">
+        <p>
+          اتصال به: {settings.dbServer} / {settings.dbName}
+        </p>
       </div>
     </div>
   );

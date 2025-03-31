@@ -11,45 +11,31 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  // Add timeout to prevent hanging requests
-  timeout: 10000,
+  withCredentials: true, // Important for CORS with credentials
 });
 
-// Add request interceptor for debugging
-api.interceptors.request.use(
-  (config) => {
-    console.log(
-      `Making ${config.method.toUpperCase()} request to ${config.url}`,
-    );
-    return config;
-  },
-  (error) => {
-    console.error("Request error:", error);
-    return Promise.reject(error);
-  },
-);
-
-// Add response interceptor for better error handling
+// Add response interceptor to handle errors consistently
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
-    console.error("API error:", error);
-    if (error.code === "ECONNABORTED") {
-      return Promise.reject({
-        message: "Request timeout. Please check your connection.",
-      });
-    }
+    console.error("API Error:", error);
 
+    // Network errors won't have a response
     if (!error.response) {
       return Promise.reject({
+        status: "error",
         message:
-          "Cannot connect to server. Please check if the backend is running.",
+          "Network error - Please check if the server is running and accessible",
+        originalError: error.message,
       });
     }
 
-    return Promise.reject(error.response?.data || error);
+    return Promise.reject(
+      error.response?.data || {
+        status: "error",
+        message: error.message || "Unknown error occurred",
+      },
+    );
   },
 );
 
@@ -61,7 +47,6 @@ export const apiService = {
       const response = await api.post("/test-connection", connectionData);
       return response.data;
     } catch (error) {
-      console.error("Test connection error:", error);
       throw error;
     }
   },
@@ -69,11 +54,9 @@ export const apiService = {
   // Save settings
   saveSettings: async (settingsData) => {
     try {
-      console.log("Saving settings:", settingsData);
       const response = await api.post("/settings", settingsData);
       return response.data;
     } catch (error) {
-      console.error("Save settings error:", error);
       throw error;
     }
   },
@@ -84,7 +67,6 @@ export const apiService = {
       const response = await api.get("/settings");
       return response.data;
     } catch (error) {
-      console.error("Get settings error:", error);
       throw error;
     }
   },
@@ -95,8 +77,9 @@ export const apiService = {
       const response = await api.get(`/product/${barcode}`);
       return response.data;
     } catch (error) {
-      console.error("Get product error:", error);
       throw error;
     }
   },
 };
+
+export default apiService;

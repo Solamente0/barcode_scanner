@@ -3,63 +3,85 @@ import React, { createContext, useState, useEffect } from "react";
 
 export const SettingsContext = createContext();
 
+// Default PostgreSQL settings
+const defaultSettings = {
+  dbServer: "localhost",
+  dbPort: "5432",
+  dbName: "barcode_scanner",
+  dbUser: "postgres",
+  dbPassword: "",
+  barcodeTable: "barcodes",
+  barcodeColumn: "barcode",
+  productCodeColumn: "product_code",
+  productsTable: "products",
+  productsCodeColumn: "product_code",
+  productsNameColumn: "product_name",
+  productsImageColumn: "product_image",
+  productsPrice1Column: "price1",
+  productsPrice2Column: "price2",
+  productsPrice3Column: "price3",
+};
+
 export const SettingsProvider = ({ children }) => {
-  const [settings, setSettings] = useState({
-    dbServer: "",
-    dbPort: "",
-    dbName: "",
-    dbUser: "",
-    dbPassword: "",
-    barcodeTable: "",
-    barcodeColumn: "",
-    productCodeColumn: "",
-    productsTable: "",
-    productsCodeColumn: "",
-    productsNameColumn: "",
-    productsImageColumn: "",
-    productsPrice1Column: "",
-    productsPrice2Column: "",
-    productsPrice3Column: "",
-  });
+  const [settings, setSettings] = useState(defaultSettings);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   // Load settings from localStorage on initial render
   useEffect(() => {
-    try {
-      console.log("Loading settings from localStorage");
-      const storedSettings = localStorage.getItem("scanner_settings");
-      if (storedSettings) {
-        const parsedSettings = JSON.parse(storedSettings);
-        console.log("Found stored settings:", parsedSettings);
-        setSettings(parsedSettings);
-      } else {
-        console.log("No stored settings found");
+    const loadSettings = () => {
+      try {
+        const storedSettings = localStorage.getItem("scanner_settings");
+        if (storedSettings) {
+          const parsedSettings = JSON.parse(storedSettings);
+          // Merge with default settings to ensure all properties exist
+          setSettings({ ...defaultSettings, ...parsedSettings });
+        }
+      } catch (error) {
+        console.error("Error loading stored settings:", error);
+        // If there's an error, fallback to default settings
+        setSettings(defaultSettings);
+      } finally {
+        setIsLoaded(true);
       }
-    } catch (error) {
-      console.error("Error parsing stored settings:", error);
-    }
+    };
+
+    loadSettings();
   }, []);
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
-    try {
-      console.log("Saving settings to localStorage:", settings);
-      localStorage.setItem("scanner_settings", JSON.stringify(settings));
-    } catch (error) {
-      console.error("Error saving settings to localStorage:", error);
+    // Only save after initial load is complete to prevent overwriting with defaults
+    if (isLoaded) {
+      try {
+        localStorage.setItem("scanner_settings", JSON.stringify(settings));
+      } catch (error) {
+        console.error("Error saving settings to localStorage:", error);
+      }
     }
-  }, [settings]);
+  }, [settings, isLoaded]);
 
   // Function to update settings
   const updateSettings = (newSettings) => {
-    console.log("Updating settings:", newSettings);
     setSettings((prevSettings) => ({
       ...prevSettings,
       ...newSettings,
     }));
   };
 
+  // Reset settings to default
+  const resetSettings = () => {
+    setSettings(defaultSettings);
+  };
+
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings }}>
+    <SettingsContext.Provider
+      value={{
+        settings,
+        updateSettings,
+        resetSettings,
+        isLoaded,
+      }}
+    >
       {children}
     </SettingsContext.Provider>
   );

@@ -60,6 +60,29 @@ body {
   background: #2563eb;
 }
 
+/* Add this to your CSS file (src/styles.css) */
+
+@keyframes scanningAnimation {
+  0% {
+    top: 20%;
+    box-shadow: 0 0 8px 2px rgba(255, 0, 0, 0.5);
+  }
+  100% {
+    top: 80%;
+    box-shadow: 0 0 8px 2px rgba(255, 0, 0, 0.5);
+  }
+}
+
+.scanning-line {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #ef4444; /* red-500 */
+  opacity: 0.8;
+  top: 50%;
+  animation: scanningAnimation 2s ease-in-out infinite alternate;
+}
 /* Scanning animation */
 @keyframes scanning {
   0% {
@@ -69,15 +92,16 @@ body {
     top: 100%;
   }
 }
-
 .scanning-line {
   position: absolute;
-  height: 2px;
+  left: 0;
   width: 100%;
-  background-color: #ef4444;
-  animation: scanning 1.5s ease-in-out infinite alternate;
+  height: 2px;
+  background-color: #ef4444; /* red-500 */
+  opacity: 0.8;
+  top: 50%;
+  animation: scanningAnimation 2s ease-in-out infinite alternate;
 }
-
 /* Pulse animation for scanner */
 @keyframes pulse {
   0% {
