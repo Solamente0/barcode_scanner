@@ -121,19 +121,28 @@ const ScannerPage = () => {
   }
 
   return (
-    <div className="container mx-auto p-4" style={{ direction: "rtl" }}>
-      <div className="mb-6">
+    <div className="container mx-auto px-2 py-2" style={{ direction: "rtl" }}>
+      {" "}
+      {/* MODIFIED: reduced padding from p-4 to px-2 py-2 */}
+      <div className="mb-3">
+        {" "}
+        {/* MODIFIED: reduced margin from mb-6 to mb-3 */}
         <BarcodeScanner onBarcodeScanned={handleBarcodeScanned} />
       </div>
-
       {isLoading ? (
-        <div className="flex justify-center items-center p-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <div className="flex justify-center items-center p-4">
+          {" "}
+          {/* MODIFIED: reduced padding from p-8 to p-4 */}
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>{" "}
+          {/* MODIFIED: reduced size from h-12 w-12 to h-10 w-10 */}
         </div>
       ) : error ? (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3">
+          {" "}
+          {/* MODIFIED: reduced padding from p-4 to p-3 */}
           <p>{error}</p>
-          <p className="mt-2 text-sm">بارکد: {lastScannedBarcode}</p>
+          <p className="mt-1 text-sm">بارکد: {lastScannedBarcode}</p>{" "}
+          {/* MODIFIED: reduced margin from mt-2 to mt-1 */}
         </div>
       ) : (
         <ProductDisplay
@@ -142,19 +151,10 @@ const ScannerPage = () => {
           onPriceTypeChange={handlePriceTypeChange}
         />
       )}
-
-      {/* Price type usage instructions */}
-      {/*<div className="mt-6 bg-gray-100 rounded-lg p-4 text-sm text-gray-700">*/}
-      {/*  <p>برای تغییر نوع قیمت:</p>*/}
-      {/*  <ul className="mt-2 list-disc list-inside">*/}
-      {/*    <li>کلید 1 را برای قیمت نوع 1 فشار دهید</li>*/}
-      {/*    <li>کلید 2 را برای قیمت نوع 2 فشار دهید</li>*/}
-      {/*    <li>کلید 3 را برای قیمت نوع 3 فشار دهید</li>*/}
-      {/*  </ul>*/}
-      {/*</div>*/}
-
-      {/* Database connection info */}
-      <div className="mt-4 p-2 text-xs text-right text-gray-500">
+      {/* Database connection info - MODIFIED: reduced margin and made text smaller */}
+      <div className="mt-2 p-1 text-xs text-right text-gray-500">
+        {" "}
+        {/* MODIFIED: reduced margin from mt-4 to mt-2 and padding from p-2 to p-1 */}
         <p>
           اتصال به: {settings.dbServer} / {settings.dbName}
         </p>

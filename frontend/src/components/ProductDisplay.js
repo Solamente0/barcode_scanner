@@ -43,9 +43,11 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="p-4 flex items-center">
-        {/* Product Image */}
-        <div className="relative flex-shrink-0 w-32 h-32 mr-4 bg-gray-100 rounded overflow-hidden">
+      <div className="p-3 flex items-center">
+        {" "}
+        {/* MODIFIED: reduced padding from p-4 to p-3 */}
+        {/* Product Image - MODIFIED: reduced size from w-32 h-32 to w-24 h-24 */}
+        <div className="relative flex-shrink-0 w-24 h-24 mr-4 bg-gray-100 rounded overflow-hidden">
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
               <svg
@@ -78,9 +80,8 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
             onError={handleImageError}
           />
         </div>
-
-        {/* Product Info */}
-        <div className="flex-grow text-right">
+        {/* Product Info - MODIFIED: added space-y-1 for compact spacing */}
+        <div className="flex-grow text-right space-y-1">
           <div>
             <span className="text-gray-600 text-sm">کدمحصول:</span>
             <span className="mr-2 font-semibold text-sm dirRtl">
@@ -88,14 +89,15 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
             </span>
           </div>
 
-          <div className="mt-1">
+          <div>
             <span className="text-gray-600 text-sm">نام محصول:</span>
             <span className="mr-2 font-semibold">{product.productName}</span>
           </div>
 
-          <div className="mt-2">
+          <div>
             <span className="text-gray-600 text-sm">قیمت:</span>
-            <span className="mr-2 font-bold text-blue-600">
+            {/* MODIFIED: increased text size to text-2xl */}
+            <span className="mr-2 font-bold text-blue-600 text-2xl">
               {formatPrice(getCurrentPrice())}
             </span>
           </div>

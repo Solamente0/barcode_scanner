@@ -194,7 +194,7 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
       <div className="relative">
         <video
           ref={videoRef}
-          className="w-full h-64 object-cover"
+          className="w-full h-32 object-cover" /* MODIFIED: reduced height from h-64 to h-48 */
           autoPlay
           playsInline
           muted
@@ -259,25 +259,27 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
         </button>
       </div>
 
-      <div className="bg-blue-600 text-white p-2 text-center">
+      <div className="bg-blue-600 text-white p-1 text-center text-sm">
+        {" "}
+        {/* MODIFIED: reduced padding and text size */}
         <p>دوربین فعال - در حال اسکن...</p>
       </div>
 
       {/* Manual barcode input option */}
       <form
         onSubmit={handleManualSubmit}
-        className="flex mt-2 border-t border-gray-200 pt-2"
+        className="flex mt-1 border-t border-gray-200 pt-1" /* MODIFIED: reduced margins */
       >
         <input
           type="text"
           value={manualBarcode}
           onChange={(e) => setManualBarcode(e.target.value)}
           placeholder="یا بارکد را اینجا وارد کنید"
-          className="flex-1 p-2 border border-gray-300 rounded-l focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="flex-1 p-1 border border-gray-300 rounded-l focus:outline-none focus:ring-1 focus:ring-blue-500" /* MODIFIED: reduced padding */
         />
         <button
           type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded-r hover:bg-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="bg-blue-500 text-white px-3 py-1 rounded-r hover:bg-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-500" /* MODIFIED: reduced padding */
         >
           جستجو
         </button>
