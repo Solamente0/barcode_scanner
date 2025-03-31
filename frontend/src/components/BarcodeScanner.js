@@ -1,6 +1,5 @@
 // src/components/BarcodeScanner.js
 import React, { useState, useEffect, useRef, useCallback } from "react";
-// Import the ZXing library directly
 import {
   BrowserMultiFormatReader,
   BarcodeFormat,
@@ -13,136 +12,138 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
   const [manualBarcode, setManualBarcode] = useState("");
   const [lastScannedBarcode, setLastScannedBarcode] = useState("");
   const [lastScannedTime, setLastScannedTime] = useState(0);
+  const [cameraFacingMode, setCameraFacingMode] = useState("environment");
 
   const videoRef = useRef(null);
-  const readerRef = useRef(null);
+  const codeReaderRef = useRef(null);
 
-  // Define startScanner with useCallback to prevent recreation on every render
-  const startScanner = useCallback(
-    async (facingMode) => {
-      if (!videoRef.current || !readerRef.current) return;
+  // Start scanner function wrapped in useCallback to prevent infinite loops
+  const startScanner = useCallback(async () => {
+    if (!codeReaderRef.current || !videoRef.current) return;
 
-      try {
-        // Reset any previous scanning
-        readerRef.current.reset();
+    try {
+      // Reset previous scanning
+      codeReaderRef.current.reset();
 
-        // Get video constraints
-        const constraints = {
-          video: {
-            facingMode: facingMode,
-          },
-        };
+      // Define camera constraints - using lower resolution for faster processing
+      // and adding torch/flash if available for better scanning in low light
+      const constraints = {
+        video: {
+          facingMode: cameraFacingMode,
+          width: { ideal: 640 }, // Lower resolution for faster processing
+          height: { ideal: 480 }, // Lower resolution for faster processing
+          advanced: [{ torch: true }], // Turn on flash/torch if available
+        },
+      };
 
-        // Start continuous scanning
-        await readerRef.current.decodeFromConstraints(
-          constraints,
-          videoRef.current,
-          (result, error) => {
-            if (result) {
-              const barcodeValue = result.getText();
+      console.log(
+        "Starting barcode scanner with facing mode:",
+        cameraFacingMode,
+      );
 
-              // Prevent duplicate scans in quick succession
-              const now = Date.now();
-              if (
-                barcodeValue !== lastScannedBarcode ||
-                now - lastScannedTime > 2000
-              ) {
-                setLastScannedBarcode(barcodeValue);
-                setLastScannedTime(now);
-                onBarcodeScanned(barcodeValue);
-              }
+      // Start continuous scanning with better error handling and debug logging
+      await codeReaderRef.current.decodeFromConstraints(
+        constraints,
+        videoRef.current,
+        (result, error) => {
+          if (result) {
+            console.log("Barcode detected:", result);
+            const barcodeValue = result.getText();
+
+            // More permissive duplicate handling (500ms cooldown)
+            const now = Date.now();
+            if (
+              barcodeValue !== lastScannedBarcode ||
+              now - lastScannedTime > 500
+            ) {
+              console.log("Processing barcode:", barcodeValue);
+              setLastScannedBarcode(barcodeValue);
+              setLastScannedTime(now);
+              onBarcodeScanned(barcodeValue);
             }
+          }
 
-            if (error && !(error instanceof TypeError)) {
-              // Ignore expected ZXing errors during scanning
-              if (
-                !error.message.includes(
-                  "No MultiFormat Readers were able to detect",
-                )
-              ) {
-                console.error("Scanning error:", error);
-              }
-            }
-          },
-        );
-      } catch (error) {
-        console.error("Error starting scanner:", error);
-        setError(`Scanner error: ${error.message}`);
+          // Only log real errors, not normal "no barcode found" errors
+          if (
+            error &&
+            !(error instanceof TypeError) &&
+            !error.message.includes("No MultiFormat Readers")
+          ) {
+            console.error("Scanning error:", error);
+          }
+        },
+      );
+
+      setIsCameraAvailable(true);
+      setError(null);
+    } catch (err) {
+      console.error("Failed to start scanner:", err);
+
+      // Try fallback to other camera if this is the first attempt
+      if (cameraFacingMode === "environment") {
+        setCameraFacingMode("user");
+        // We don't call startScanner directly to avoid potential issues
+        // It will be triggered by the useEffect when cameraFacingMode changes
+      } else {
+        setIsCameraAvailable(false);
+        setError(`Camera error: ${err.message || "Could not access camera"}`);
       }
-    },
-    [lastScannedBarcode, lastScannedTime, onBarcodeScanned],
-  );
+    }
+  }, [cameraFacingMode, lastScannedBarcode, lastScannedTime, onBarcodeScanned]);
 
-  // Initialize scanner
+  // Initialize scanner with more inclusive settings
   useEffect(() => {
-    // Set up hints for barcode reader
+    // Configure settings for barcode reader with expanded format support
     const hints = new Map();
     const formats = [
+      // 1D product barcodes
       BarcodeFormat.EAN_13,
       BarcodeFormat.EAN_8,
-      BarcodeFormat.CODE_39,
-      BarcodeFormat.CODE_128,
-      BarcodeFormat.QR_CODE,
-      BarcodeFormat.DATA_MATRIX,
       BarcodeFormat.UPC_A,
       BarcodeFormat.UPC_E,
+      // 1D industrial barcodes
+      BarcodeFormat.CODE_39,
+      BarcodeFormat.CODE_93,
+      BarcodeFormat.CODE_128,
+      BarcodeFormat.ITF,
+      BarcodeFormat.CODABAR,
+      // 2D barcodes
+      BarcodeFormat.QR_CODE,
+      BarcodeFormat.DATA_MATRIX,
+      BarcodeFormat.PDF_417,
+      BarcodeFormat.AZTEC,
     ];
 
     hints.set(DecodeHintType.POSSIBLE_FORMATS, formats);
     hints.set(DecodeHintType.TRY_HARDER, true);
+    hints.set(DecodeHintType.ASSUME_GS1, false);
 
-    // Create reader
-    const reader = new BrowserMultiFormatReader(hints);
-    readerRef.current = reader;
+    // Create reader with more inclusive settings and faster scanning rate
+    const reader = new BrowserMultiFormatReader(hints, {
+      delayBetweenScanAttempts: 50,
+    });
+    codeReaderRef.current = reader;
 
-    // Check for camera
-    const checkCameraAvailability = async () => {
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const hasCamera = devices.some(
-          (device) => device.kind === "videoinput",
-        );
-
-        if (!hasCamera) {
-          setIsCameraAvailable(false);
-          setError("No camera detected on this device");
-          return;
-        }
-
-        // Try to get camera access
-        try {
-          // Start with environment camera if available (back camera)
-          await startScanner("environment");
-        } catch (envError) {
-          console.warn("Could not access environment camera:", envError);
-
-          try {
-            // Fall back to any camera
-            await startScanner("user");
-          } catch (userError) {
-            console.error("Could not access any camera:", userError);
-            setIsCameraAvailable(false);
-            setError(
-              "Could not access camera. Please check permissions and try again.",
-            );
-          }
-        }
-      } catch (error) {
-        console.error("Error checking camera:", error);
-        setIsCameraAvailable(false);
-        setError(`Camera error: ${error.message}`);
-      }
-    };
-
-    checkCameraAvailability();
-
-    // Cleanup
+    // Cleanup function
+    const currentReader = codeReaderRef.current;
     return () => {
-      if (readerRef.current) {
-        readerRef.current.reset();
+      if (currentReader) {
+        currentReader.reset();
       }
     };
-  }, [startScanner]); // Add startScanner as a dependency
+  }, []);
+
+  // Effect to start scanner when camera mode changes or when first mounted
+  useEffect(() => {
+    startScanner();
+  }, [startScanner]);
+
+  // Handle camera switching
+  const toggleCamera = () => {
+    const newMode = cameraFacingMode === "environment" ? "user" : "environment";
+    setCameraFacingMode(newMode);
+    // No need to call startScanner here as the useEffect will handle it
+  };
 
   // Handle manual barcode input
   const handleManualSubmit = (e) => {
@@ -191,7 +192,13 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
   return (
     <div className="rounded-lg overflow-hidden">
       <div className="relative">
-        <video ref={videoRef} className="w-full h-64 object-cover" />
+        <video
+          ref={videoRef}
+          className="w-full h-64 object-cover"
+          autoPlay
+          playsInline
+          muted
+        />
 
         <div
           className="absolute inset-0 border-4 border-blue-500 opacity-50 pointer-events-none"
@@ -199,16 +206,60 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
         ></div>
 
         {/* Scanning line animation */}
-        <div
-          className="absolute left-0 w-full h-0.5 bg-red-500 opacity-80"
-          style={{
-            top: "50%",
-            animation: "scanningAnimation 2s ease-in-out infinite alternate",
-          }}
-        ></div>
+        <div className="scanning-line"></div>
+
+        {/* Camera toggle button */}
+        <button
+          onClick={toggleCamera}
+          className="absolute bottom-2 right-2 bg-blue-600 text-white p-2 rounded-full opacity-80 hover:opacity-100"
+          aria-label="Toggle camera"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            className="w-6 h-6"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+            />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+          </svg>
+        </button>
+
+        {/* Restart button in case of issues */}
+        <button
+          onClick={() => startScanner()}
+          className="absolute bottom-2 left-2 bg-green-600 text-white p-2 rounded-full opacity-80 hover:opacity-100"
+          aria-label="Restart scanner"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            className="w-6 h-6"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
+          </svg>
+        </button>
       </div>
 
-      <div className="bg-blue-500 text-white p-2 text-center">
+      <div className="bg-blue-600 text-white p-2 text-center">
         <p>دوربین فعال - در حال اسکن...</p>
       </div>
 
