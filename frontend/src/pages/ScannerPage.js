@@ -144,14 +144,14 @@ const ScannerPage = () => {
       )}
 
       {/* Price type usage instructions */}
-      <div className="mt-6 bg-gray-100 rounded-lg p-4 text-sm text-gray-700">
-        <p>برای تغییر نوع قیمت:</p>
-        <ul className="mt-2 list-disc list-inside">
-          <li>کلید 1 را برای قیمت نوع 1 فشار دهید</li>
-          <li>کلید 2 را برای قیمت نوع 2 فشار دهید</li>
-          <li>کلید 3 را برای قیمت نوع 3 فشار دهید</li>
-        </ul>
-      </div>
+      {/*<div className="mt-6 bg-gray-100 rounded-lg p-4 text-sm text-gray-700">*/}
+      {/*  <p>برای تغییر نوع قیمت:</p>*/}
+      {/*  <ul className="mt-2 list-disc list-inside">*/}
+      {/*    <li>کلید 1 را برای قیمت نوع 1 فشار دهید</li>*/}
+      {/*    <li>کلید 2 را برای قیمت نوع 2 فشار دهید</li>*/}
+      {/*    <li>کلید 3 را برای قیمت نوع 3 فشار دهید</li>*/}
+      {/*  </ul>*/}
+      {/*</div>*/}
 
       {/* Database connection info */}
       <div className="mt-4 p-2 text-xs text-right text-gray-500">
