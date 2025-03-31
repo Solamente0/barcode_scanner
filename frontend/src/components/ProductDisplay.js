@@ -20,6 +20,12 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
   const handlePriceTypeSelect = (type) => {
     onPriceTypeChange(type);
   };
+  const formatPrice = (price) => {
+    if (!price) return "0";
+    // Convert to integer first by removing decimal part
+    const intPrice = Math.floor(parseFloat(price));
+    return intPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
 
   // Determine which price to show based on selected price type
   const getCurrentPrice = () => {
@@ -36,10 +42,10 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
   };
 
   // Format price with commas for thousands
-  const formatPrice = (price) => {
-    if (!price) return "0";
-    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  };
+  // const formatPrice = (price) => {
+  //   if (!price) return "0";
+  //   return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  // };
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -94,16 +100,22 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
             <span className="mr-2 font-semibold">{product.productName}</span>
           </div>
 
-          <div>
-            <span className="text-gray-600 text-sm">قیمت:</span>
-            {/* MODIFIED: increased text size to text-2xl */}
-            <span className="mr-2 font-bold text-blue-600 text-2xl">
-              {formatPrice(getCurrentPrice())}
-            </span>
-          </div>
+          {/*<div>*/}
+          {/*  <span className="text-gray-600 text-sm">قیمت:</span>*/}
+          {/*  /!* MODIFIED: increased text size to text-2xl *!/*/}
+          {/*  <span className="mr-2 font-bold text-blue-600 text-2xl">*/}
+          {/*    {formatPrice(getCurrentPrice())}*/}
+          {/*  </span>*/}
+          {/*</div>*/}
         </div>
       </div>
+      <div className="px-3 pb-3 text-center">
+        <span className="text-gray-600 text-sm">قیمت:</span>
 
+        <span className="font-bold text-blue-600 text-3xl block">
+          {formatPrice(getCurrentPrice())}
+        </span>
+      </div>
       {/* Price Type Selector */}
       <div className="flex border-t border-gray-200">
         <button
