@@ -6,8 +6,26 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
 
   if (!product) {
     return (
-      <div className="bg-white p-4 rounded-lg shadow-md text-center">
-        <p className="text-gray-500">لطفا بارکد محصول را اسکن کنید</p>
+      <div className="bg-white p-6 rounded-lg shadow-md text-center">
+        <div className="flex flex-col items-center justify-center space-y-4 py-8">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-16 w-16 text-blue-300"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+            />
+          </svg>
+          <p className="text-gray-500 text-lg font-medium">
+            لطفا بارکد محصول را اسکن کنید
+          </p>
+        </div>
       </div>
     );
   }
@@ -20,6 +38,8 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
   const handlePriceTypeSelect = (type) => {
     onPriceTypeChange(type);
   };
+
+  // Format price with commas for thousands
   const formatPrice = (price) => {
     if (!price) return "0";
     // Convert to integer first by removing decimal part
@@ -41,23 +61,16 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
     }
   };
 
-  // Format price with commas for thousands
-  // const formatPrice = (price) => {
-  //   if (!price) return "0";
-  //   return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  // };
-
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="p-3 flex items-center">
-        {" "}
-        {/* MODIFIED: reduced padding from p-4 to p-3 */}
-        {/* Product Image - MODIFIED: reduced size from w-32 h-32 to w-24 h-24 */}
-        <div className="relative flex-shrink-0 w-24 h-24 mr-4 bg-gray-100 rounded overflow-hidden">
+    <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100">
+      {/* Product Header Section */}
+      <div className="p-4 flex items-center bg-gradient-to-r from-blue-50 to-white">
+        {/* Product Image */}
+        <div className="relative flex-shrink-0 w-28 h-28 mr-4 bg-white rounded-lg overflow-hidden shadow-md">
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
               <svg
-                className="animate-spin h-8 w-8 text-blue-500"
+                className="animate-spin h-10 w-10 text-blue-500"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -86,56 +99,48 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
             onError={handleImageError}
           />
         </div>
-        {/* Product Info - MODIFIED: added space-y-1 for compact spacing */}
-        <div className="flex-grow text-right space-y-1">
-          <div>
-            <span className="text-gray-600 text-sm">کدمحصول:</span>
-            <span className="mr-2 font-semibold text-sm dirRtl">
+
+        {/* Product Info */}
+        <div className="flex-grow text-right space-y-2">
+          <div className="bg-blue-50 inline-block px-3 py-1 rounded-full">
+            <span className="text-gray-600 text-sm ml-1">کدمحصول:</span>
+            <span className="font-semibold text-blue-800 dirRtl">
               {product.productCode}
             </span>
           </div>
 
           <div>
-            <span className="text-gray-600 text-sm">نام محصول:</span>
-            <span className="mr-2 font-semibold">{product.productName}</span>
+            <h2 className="text-lg font-bold text-gray-800 line-clamp-2">
+              {product.productName}
+            </h2>
           </div>
-
-          {/*<div>*/}
-          {/*  <span className="text-gray-600 text-sm">قیمت:</span>*/}
-          {/*  /!* MODIFIED: increased text size to text-2xl *!/*/}
-          {/*  <span className="mr-2 font-bold text-blue-600 text-2xl">*/}
-          {/*    {formatPrice(getCurrentPrice())}*/}
-          {/*  </span>*/}
-          {/*</div>*/}
         </div>
       </div>
-      <div className="px-3 pb-3 text-center">
-        <span className="text-gray-600 text-sm">قیمت:</span>
 
-        <span className="font-bold text-blue-600 text-3xl block">
+      {/* Price Display Section */}
+      <div className="px-4 py-5 text-center bg-white">
+        <div className="mb-1 text-xs font-medium text-gray-500">قیمت:</div>
+        <div className="font-bold text-blue-700 text-4xl mb-3">
           {formatPrice(getCurrentPrice())}
-        </span>
+          <span className="text-sm text-gray-500 mr-1">تومان</span>
+        </div>
       </div>
+
       {/* Price Type Selector */}
-      <div className="flex border-t border-gray-200">
-        <button
-          onClick={() => handlePriceTypeSelect(1)}
-          className={`flex-1 py-2 text-center text-sm ${priceType === 1 ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-700"}`}
-        >
-          ۱
-        </button>
-        <button
-          onClick={() => handlePriceTypeSelect(2)}
-          className={`flex-1 py-2 text-center text-sm ${priceType === 2 ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-700"}`}
-        >
-          ۲
-        </button>
-        <button
-          onClick={() => handlePriceTypeSelect(3)}
-          className={`flex-1 py-2 text-center text-sm ${priceType === 3 ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-700"}`}
-        >
-          ۳
-        </button>
+      <div className="grid grid-cols-3 border-t border-gray-200">
+        {[1, 2, 3].map((type) => (
+          <button
+            key={type}
+            onClick={() => handlePriceTypeSelect(type)}
+            className={`py-3 text-center transition-all duration-200 text-sm font-medium ${
+              priceType === type
+                ? "bg-blue-600 text-white shadow-inner"
+                : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            تیپ قیمت {type}
+          </button>
+        ))}
       </div>
     </div>
   );
