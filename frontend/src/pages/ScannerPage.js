@@ -95,7 +95,7 @@ const ScannerPage = () => {
   if (!isLoaded) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
   }
@@ -112,7 +112,7 @@ const ScannerPage = () => {
         </div>
         <button
           onClick={() => navigate("/settings")}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"
         >
           رفتن به صفحه تنظیمات
         </button>
@@ -133,7 +133,7 @@ const ScannerPage = () => {
         <div className="flex justify-center items-center p-4">
           {" "}
           {/* MODIFIED: reduced padding from p-8 to p-4 */}
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>{" "}
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500"></div>{" "}
           {/* MODIFIED: reduced size from h-12 w-12 to h-10 w-10 */}
         </div>
       ) : error ? (

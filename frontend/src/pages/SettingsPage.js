@@ -106,7 +106,7 @@ const SettingsPage = () => {
     return (
       <div className="bg-white rounded-lg shadow-md mb-4 overflow-hidden transition-all duration-300">
         <div
-          className={`px-4 py-3 flex justify-between items-center cursor-pointer ${isActive ? "bg-blue-50 border-b border-blue-100" : ""}`}
+          className={`px-4 py-3 flex justify-between items-center cursor-pointer ${isActive ? "bg-orange-50 border-b border-orange-100" : ""}`}
           onClick={() => toggleSection(id)}
         >
           <div className="flex items-center">
@@ -161,7 +161,7 @@ const SettingsPage = () => {
         name={name}
         value={value}
         onChange={handleChange}
-        className="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+        className="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
         placeholder={placeholder}
         required={required}
       />
@@ -172,7 +172,7 @@ const SettingsPage = () => {
     <div className="container mx-auto p-4" style={{ direction: "rtl" }}>
       <div className="max-w-3xl mx-auto">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-700 to-blue-500 text-white rounded-lg shadow-lg p-6 mb-6">
+        <div className="bg-gradient-to-r from-orange-700 to-orange-500 text-white rounded-lg shadow-lg p-6 mb-6">
           <div className="flex items-center">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -251,7 +251,7 @@ const SettingsPage = () => {
             icon={
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-blue-600"
+                className="h-6 w-6 text-orange-600"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -316,7 +316,7 @@ const SettingsPage = () => {
                 type="button"
                 onClick={handleTestConnection}
                 disabled={isLoading}
-                className="inline-flex items-center bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 shadow-md"
+                className="inline-flex items-center bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors duration-200 shadow-md"
               >
                 {isLoading ? (
                   <>
@@ -413,7 +413,7 @@ const SettingsPage = () => {
             icon={
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-blue-600"
+                className="h-6 w-6 text-orange-600"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -461,7 +461,7 @@ const SettingsPage = () => {
             icon={
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-blue-600"
+                className="h-6 w-6 text-orange-600"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -545,7 +545,7 @@ const SettingsPage = () => {
             icon={
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-blue-600"
+                className="h-6 w-6 text-orange-600"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -559,8 +559,8 @@ const SettingsPage = () => {
               </svg>
             }
           >
-            <div className="bg-blue-50 p-4 rounded-lg mb-4 border border-blue-100">
-              <h3 className="font-semibold text-blue-800 mb-2 flex items-center">
+            <div className="bg-orange-50 p-4 rounded-lg mb-4 border border-orange-100">
+              <h3 className="font-semibold text-orange-800 mb-2 flex items-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-5 w-5 ml-1"
@@ -578,13 +578,13 @@ const SettingsPage = () => {
               <ul className="list-disc list-inside space-y-1 text-gray-700 pr-4">
                 <li className="flex items-baseline">
                   <span className="font-medium text-gray-900 ml-2">آدرس:</span>
-                  <code className="bg-blue-100 px-2 py-1 rounded text-blue-800">
+                  <code className="bg-orange-100 px-2 py-1 rounded text-orange-800">
                     localhost
                   </code>
                 </li>
                 <li className="flex items-baseline">
                   <span className="font-medium text-gray-900 ml-2">پورت:</span>
-                  <code className="bg-blue-100 px-2 py-1 rounded text-blue-800">
+                  <code className="bg-orange-100 px-2 py-1 rounded text-orange-800">
                     5432
                   </code>
                 </li>
@@ -592,13 +592,13 @@ const SettingsPage = () => {
                   <span className="font-medium text-gray-900 ml-2">
                     نام دیتابیس:
                   </span>
-                  <code className="bg-blue-100 px-2 py-1 rounded text-blue-800">
+                  <code className="bg-orange-100 px-2 py-1 rounded text-orange-800">
                     barcode_scanner
                   </code>
                 </li>
                 <li className="flex items-baseline">
                   <span className="font-medium text-gray-900 ml-2">یوزر:</span>
-                  <code className="bg-blue-100 px-2 py-1 rounded text-blue-800">
+                  <code className="bg-orange-100 px-2 py-1 rounded text-orange-800">
                     postgres
                   </code>
                 </li>
@@ -609,8 +609,8 @@ const SettingsPage = () => {
               </ul>
             </div>
 
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-              <h3 className="font-semibold text-blue-800 mb-2 flex items-center">
+            <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
+              <h3 className="font-semibold text-orange-800 mb-2 flex items-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-5 w-5 ml-1"
@@ -626,7 +626,7 @@ const SettingsPage = () => {
                   <span className="font-medium text-gray-900 ml-2">
                     نام جدول بارکد:
                   </span>
-                  <code className="bg-blue-100 px-2 py-1 rounded text-blue-800">
+                  <code className="bg-orange-100 px-2 py-1 rounded text-orange-800">
                     barcodes
                   </code>
                 </div>
@@ -634,7 +634,7 @@ const SettingsPage = () => {
                   <span className="font-medium text-gray-900 ml-2">
                     نام ستون بارکد:
                   </span>
-                  <code className="bg-blue-100 px-2 py-1 rounded text-blue-800">
+                  <code className="bg-orange-100 px-2 py-1 rounded text-orange-800">
                     barcode
                   </code>
                 </div>
@@ -642,7 +642,7 @@ const SettingsPage = () => {
                   <span className="font-medium text-gray-900 ml-2">
                     نام ستون کد محصول:
                   </span>
-                  <code className="bg-blue-100 px-2 py-1 rounded text-blue-800">
+                  <code className="bg-orange-100 px-2 py-1 rounded text-orange-800">
                     product_code
                   </code>
                 </div>
@@ -650,7 +650,7 @@ const SettingsPage = () => {
                   <span className="font-medium text-gray-900 ml-2">
                     نام جدول محصولات:
                   </span>
-                  <code className="bg-blue-100 px-2 py-1 rounded text-blue-800">
+                  <code className="bg-orange-100 px-2 py-1 rounded text-orange-800">
                     products
                   </code>
                 </div>
@@ -658,7 +658,7 @@ const SettingsPage = () => {
                   <span className="font-medium text-gray-900 ml-2">
                     نام ستون نام محصول:
                   </span>
-                  <code className="bg-blue-100 px-2 py-1 rounded text-blue-800">
+                  <code className="bg-orange-100 px-2 py-1 rounded text-orange-800">
                     product_name
                   </code>
                 </div>
@@ -666,7 +666,7 @@ const SettingsPage = () => {
                   <span className="font-medium text-gray-900 ml-2">
                     نام ستون تصویر محصول:
                   </span>
-                  <code className="bg-blue-100 px-2 py-1 rounded text-blue-800">
+                  <code className="bg-orange-100 px-2 py-1 rounded text-orange-800">
                     product_image
                   </code>
                 </div>
@@ -674,7 +674,7 @@ const SettingsPage = () => {
                   <span className="font-medium text-gray-900 ml-2">
                     نام ستون قیمت 1:
                   </span>
-                  <code className="bg-blue-100 px-2 py-1 rounded text-blue-800">
+                  <code className="bg-orange-100 px-2 py-1 rounded text-orange-800">
                     price1
                   </code>
                 </div>
@@ -682,7 +682,7 @@ const SettingsPage = () => {
                   <span className="font-medium text-gray-900 ml-2">
                     نام ستون قیمت 2:
                   </span>
-                  <code className="bg-blue-100 px-2 py-1 rounded text-blue-800">
+                  <code className="bg-orange-100 px-2 py-1 rounded text-orange-800">
                     price2
                   </code>
                 </div>
@@ -690,7 +690,7 @@ const SettingsPage = () => {
                   <span className="font-medium text-gray-900 ml-2">
                     نام ستون قیمت 3:
                   </span>
-                  <code className="bg-blue-100 px-2 py-1 rounded text-blue-800">
+                  <code className="bg-orange-100 px-2 py-1 rounded text-orange-800">
                     price3
                   </code>
                 </div>

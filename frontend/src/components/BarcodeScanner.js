@@ -214,12 +214,12 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
               value={manualBarcode}
               onChange={(e) => setManualBarcode(e.target.value)}
               placeholder="بارکد را اینجا وارد کنید"
-              className="flex-1 p-3 border border-gray-300 rounded-r focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 p-3 border border-gray-300 rounded-r focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               dir="ltr"
             />
             <button
               type="submit"
-              className="bg-blue-600 text-white px-6 py-3 rounded-l hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+              className="bg-orange-600 text-white px-6 py-3 rounded-l hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors duration-200"
             >
               جستجو
             </button>
@@ -241,7 +241,7 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
         />
 
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-32 h-32 border-2 border-blue-500 rounded-lg opacity-80 pulse"></div>
+          <div className="w-32 h-32 border-2 border-orange-500 rounded-lg opacity-80 pulse"></div>
         </div>
 
         {/* Scanning line animation */}
@@ -252,7 +252,7 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
           {/* Camera toggle button */}
           <button
             onClick={toggleCamera}
-            className="bg-white text-blue-600 p-3 rounded-full shadow-lg hover:bg-blue-50 transition-colors duration-200"
+            className="bg-white text-orange-600 p-3 rounded-full shadow-lg hover:bg-orange-50 transition-colors duration-200"
             aria-label="Toggle camera"
           >
             <svg
@@ -329,7 +329,7 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
           {/* Restart button */}
           <button
             onClick={() => startScanner()}
-            className="bg-white text-blue-600 p-3 rounded-full shadow-lg hover:bg-blue-50 transition-colors duration-200"
+            className="bg-white text-orange-600 p-3 rounded-full shadow-lg hover:bg-orange-50 transition-colors duration-200"
             aria-label="Restart scanner"
           >
             <svg
@@ -351,7 +351,7 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
       </div>
 
       <div
-        className={`p-3 text-center text-white font-medium ${isScanning ? "bg-blue-600" : "bg-gray-500"}`}
+        className={`p-3 text-center text-white font-medium ${isScanning ? "bg-orange-600" : "bg-gray-500"}`}
       >
         <p>
           {isScanning
@@ -371,12 +371,12 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
             value={manualBarcode}
             onChange={(e) => setManualBarcode(e.target.value)}
             placeholder="یا بارکد را اینجا وارد کنید"
-            className="flex-1 p-2 border border-gray-300 rounded-r focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="flex-1 p-2 border border-gray-300 rounded-r focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             dir="ltr"
           />
           <button
             type="submit"
-            className="bg-blue-600 text-white px-6 py-3 rounded-l hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+            className="bg-orange-600 text-white px-6 py-3 rounded-l hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors duration-200"
           >
             جستجو
           </button>

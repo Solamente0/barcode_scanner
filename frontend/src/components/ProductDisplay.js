@@ -10,7 +10,7 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
         <div className="flex flex-col items-center justify-center space-y-4 py-8">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-16 w-16 text-blue-300"
+            className="h-16 w-16 text-orange-300"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -64,13 +64,13 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100">
       {/* Product Header Section */}
-      <div className="p-4 flex items-center bg-gradient-to-r from-blue-50 to-white">
+      <div className="p-4 flex items-center bg-gradient-to-r from-orange-50 to-white">
         {/* Product Image */}
         <div className="relative flex-shrink-0 w-28 h-28 mr-4 bg-white rounded-lg overflow-hidden shadow-md">
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
               <svg
-                className="animate-spin h-10 w-10 text-blue-500"
+                className="animate-spin h-10 w-10 text-orange-500"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -102,9 +102,9 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
 
         {/* Product Info */}
         <div className="flex-grow text-right space-y-2">
-          <div className="bg-blue-50 inline-block px-3 py-1 rounded-full">
+          <div className="bg-orange-50 inline-block px-3 py-1 rounded-full">
             <span className="text-gray-600 text-sm ml-1">کدمحصول:</span>
-            <span className="font-semibold text-blue-800 dirRtl">
+            <span className="font-semibold text-orange-800 dirRtl">
               {product.productCode}
             </span>
           </div>
@@ -120,7 +120,7 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
       {/* Price Display Section */}
       <div className="px-4 py-5 text-center bg-white">
         <div className="mb-1 text-xs font-medium text-gray-500">قیمت:</div>
-        <div className="font-bold text-blue-700 text-4xl mb-3">
+        <div className="font-bold text-orange-700 text-4xl mb-3">
           {formatPrice(getCurrentPrice())}
           <span className="text-sm text-gray-500 mr-1">تومان</span>
         </div>
@@ -134,7 +134,7 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
             onClick={() => handlePriceTypeSelect(type)}
             className={`py-3 text-center transition-all duration-200 text-sm font-medium ${
               priceType === type
-                ? "bg-blue-600 text-white shadow-inner"
+                ? "bg-orange-600 text-white shadow-inner"
                 : "bg-gray-50 text-gray-700 hover:bg-gray-100"
             }`}
           >

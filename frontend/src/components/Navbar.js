@@ -6,7 +6,7 @@ const Navbar = () => {
   const location = useLocation();
 
   return (
-    <nav className="bg-gradient-to-r from-blue-700 to-blue-500 text-white shadow-lg">
+    <nav className="bg-gradient-to-r from-orange-700 to-orange-500 text-white shadow-lg">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           <div className="flex-shrink-0 flex items-center">
@@ -34,8 +34,8 @@ const Navbar = () => {
               to="/"
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
                 location.pathname === "/"
-                  ? "bg-white text-blue-700"
-                  : "text-white hover:bg-blue-600"
+                  ? "bg-white text-orange-700"
+                  : "text-white hover:bg-orange-600"
               }`}
             >
               <div className="flex items-center">
@@ -61,8 +61,8 @@ const Navbar = () => {
               to="/settings"
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
                 location.pathname === "/settings"
-                  ? "bg-white text-blue-700"
-                  : "text-white hover:bg-blue-600"
+                  ? "bg-white text-orange-700"
+                  : "text-white hover:bg-orange-600"
               }`}
             >
               <div className="flex items-center">
