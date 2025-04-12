@@ -46,7 +46,11 @@ const SettingsPage = () => {
       const connectionData = {
         dbType: formData.dbType || "postgres",
         dbServer: String(formData.dbServer || ""),
-        dbPort: String(formData.dbPort || "5432"),
+        // For MS SQL, explicitly set server for backward compatibility
+        server: String(formData.dbServer || ""),
+        dbPort: String(
+          formData.dbPort || (formData.dbType === "mssql" ? "1433" : "5432"),
+        ),
         dbName: String(formData.dbName || ""),
         dbUser: String(formData.dbUser || ""),
         dbPassword: String(formData.dbPassword || ""),
@@ -86,8 +90,7 @@ const SettingsPage = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-  // Add handler function for API test button
+  }; // Add handler function for API test button
   const handleTestApiConnection = async (e) => {
     e.preventDefault();
     setIsApiTesting(true);
@@ -446,6 +449,25 @@ const SettingsPage = () => {
             }
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="mb-4">
+                <label
+                  className="block text-gray-700 text-sm font-bold mb-2"
+                  htmlFor="dbType"
+                >
+                  نوع دیتابیس <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="dbType"
+                  name="dbType"
+                  value={formData.dbType || "postgres"}
+                  onChange={handleChange}
+                  className="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                  required={true}
+                >
+                  <option value="postgres">PostgreSQL</option>
+                  <option value="mssql">SQL Server</option>
+                </select>
+              </div>
               <TextField
                 label="آیپی / هاست"
                 id="dbServer"
@@ -454,7 +476,6 @@ const SettingsPage = () => {
                 placeholder="localhost"
                 required={true}
               />
-
               <TextField
                 label="پورت"
                 id="dbPort"
@@ -462,7 +483,6 @@ const SettingsPage = () => {
                 value={formData.dbPort}
                 placeholder="5432"
               />
-
               <TextField
                 label="نام دیتابیس"
                 id="dbName"
@@ -471,7 +491,6 @@ const SettingsPage = () => {
                 placeholder="barcode_scanner"
                 required={true}
               />
-
               <TextField
                 label="یوزر"
                 id="dbUser"
@@ -480,7 +499,6 @@ const SettingsPage = () => {
                 placeholder="postgres"
                 required={true}
               />
-
               <TextField
                 label="پسورد"
                 id="dbPassword"

@@ -83,6 +83,8 @@ app.use((req, res, next) => {
 // Fix for database connection - modify the getDbConfig function (around line 80)
 const getDbConfig = (customConfig = null) => {
   if (customConfig) {
+    console.log("getDbCoasdsadnfig", customConfig);
+
     // Make sure server is defined and is a string
     if (!customConfig.server && customConfig.dbServer) {
       customConfig.server = customConfig.dbServer;
@@ -171,6 +173,7 @@ async function connectAndQuery(query, params = [], customConfig = null) {
   console.log(`Query parameters:`, params);
 
   const config = getDbConfig(customConfig);
+  console.log("getDbConfig", config);
 
   // Validate configuration
   if (
@@ -459,6 +462,7 @@ app.post("/api/test-connection", async (req, res) => {
   const {
     dbType = "postgres",
     dbServer,
+    server, // Add this line to accept both dbServer and server
     dbPort,
     dbName,
     dbUser,
@@ -468,24 +472,21 @@ app.post("/api/test-connection", async (req, res) => {
     dbTrustServerCert,
   } = req.body;
 
+  // Use either dbServer or server property
+  const actualServer = dbServer || server || "";
+
   // Validate required fields first
-  if (!dbServer) {
+  if (!actualServer) {
     return res.status(400).json({
       status: "error",
       message: "Database server address is required",
     });
   }
 
-  if (!dbName) {
-    return res.status(400).json({
-      status: "error",
-      message: "Database name is required",
-    });
-  }
-
+  // Log parameters - update to include both server properties
   console.log("Connection test parameters (password masked):", {
     dbType,
-    dbServer,
+    dbServer: actualServer,
     dbPort,
     dbName,
     dbUser,
@@ -502,7 +503,7 @@ app.post("/api/test-connection", async (req, res) => {
     testConfig = {
       user: dbUser,
       password: dbPassword,
-      server: String(dbServer), // Ensure server is a string
+      server: String(actualServer), // Use the actual server and ensure it's a string
       port: parseInt(dbPort) || 1433,
       database: dbName,
       options: {
@@ -517,7 +518,7 @@ app.post("/api/test-connection", async (req, res) => {
     testConfig = {
       user: dbUser,
       password: dbPassword,
-      host: String(dbServer), // Ensure host is a string
+      host: String(actualServer), // Use the actual server and ensure it's a string
       port: parseInt(dbPort) || 5432,
       database: dbName,
       ssl:
