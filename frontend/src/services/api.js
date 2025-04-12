@@ -1,9 +1,26 @@
 // src/services/api.js
 import axios from "axios";
 
+const getApiBaseUrl = () => {
+  try {
+    const storedSettings = localStorage.getItem("scanner_settings");
+    if (storedSettings) {
+      const settings = JSON.parse(storedSettings);
+      let serverUrl = process.env.REACT_APP_API_URL.replace(/^https?:\/\//, "");
+      const parts = serverUrl.split(":");
+      const server = settings.apiServer || parts[0] || "localhost";
+      const port = settings.apiPort || parts[1] || "5000";
+
+      return `http://${server}:${port}/api`;
+    }
+  } catch (error) {
+    console.error("Error getting API settings:", error);
+  }
+  return "http://localhost:5000/api";
+};
+
 // Get base URL from environment or default to localhost
-const API_BASE_URL =
-  process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+const API_BASE_URL = getApiBaseUrl();
 
 // Create axios instance with default config
 const api = axios.create({
@@ -42,6 +59,48 @@ api.interceptors.response.use(
 // API methods
 export const apiService = {
   // Test database connection
+  updateBaseUrl: () => {
+    api.defaults.baseURL = getApiBaseUrl();
+  },
+  // Add this method to the apiService object in src/services/api.js
+  testApiConnection: async (serverAddress, serverPort) => {
+    try {
+      // Build a temporary URL for testing
+      const testUrl = `http://${serverAddress}:${serverPort}/api/ping`;
+
+      // Create a temporary axios instance to avoid modifying the main one
+      const testApi = axios.create({
+        timeout: 5000, // 5 second timeout for quick feedback
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const response = await testApi.get(testUrl);
+      return {
+        success: true,
+        message: "اتصال به سرور API با موفقیت انجام شد.",
+        data: response.data,
+      };
+    } catch (error) {
+      console.error("API connection test failed:", error);
+      let errorMessage = "خطا در اتصال به سرور API";
+
+      if (error.code === "ECONNREFUSED") {
+        errorMessage =
+          "عدم دسترسی به سرور: اطمینان حاصل کنید سرور در حال اجرا است.";
+      } else if (error.code === "ETIMEDOUT") {
+        errorMessage = "زمان اتصال به پایان رسید: سرور پاسخ نمی‌دهد.";
+      } else if (error.response) {
+        errorMessage = `خطای سرور: ${error.response.status} - ${error.response.statusText}`;
+      }
+
+      return {
+        success: false,
+        message: errorMessage,
+      };
+    }
+  },
   testConnection: async (connectionData) => {
     try {
       const response = await api.post("/test-connection", connectionData);

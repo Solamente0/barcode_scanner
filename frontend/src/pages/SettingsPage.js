@@ -14,6 +14,8 @@ const SettingsPage = () => {
   const [activeSection, setActiveSection] = useState("database"); // Track which section is expanded
   const formRef = useRef(null);
   const navigate = useNavigate();
+  const [isApiTesting, setIsApiTesting] = useState(false);
+  const [apiTestResult, setApiTestResult] = useState(null);
 
   // Initialize with default PostgreSQL port if empty
   useEffect(() => {
@@ -64,6 +66,27 @@ const SettingsPage = () => {
     }
   };
 
+  // Add handler function for API test button
+  const handleTestApiConnection = async (e) => {
+    e.preventDefault();
+    setIsApiTesting(true);
+    setApiTestResult(null);
+
+    try {
+      const result = await apiService.testApiConnection(
+        formData.apiServer,
+        formData.apiPort,
+      );
+      setApiTestResult(result);
+    } catch (error) {
+      setApiTestResult({
+        success: false,
+        message: `خطا در تست API: ${error.message || "خطای نامشخص"}`,
+      });
+    } finally {
+      setIsApiTesting(false);
+    }
+  };
   // Save settings
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -244,6 +267,142 @@ const SettingsPage = () => {
         )}
 
         <form ref={formRef} onSubmit={handleSubmit}>
+          {/* API Connection Settings */}
+          <SettingsCard
+            title="تنظیمات سرور API"
+            id="api"
+            icon={
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 text-orange-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"
+                />
+              </svg>
+            }
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <TextField
+                label="آدرس سرور API"
+                id="apiServer"
+                name="apiServer"
+                value={formData.apiServer}
+                placeholder="localhost"
+                required={true}
+              />
+
+              <TextField
+                label="پورت سرور API"
+                id="apiPort"
+                name="apiPort"
+                value={formData.apiPort}
+                placeholder="5000"
+                required={true}
+              />
+            </div>
+
+            {/* Add API test button and result display */}
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={handleTestApiConnection}
+                disabled={isLoading}
+                className="inline-flex items-center bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors duration-200 shadow-md"
+              >
+                {isApiTesting ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    در حال تست API...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 ml-1"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                      />
+                    </svg>
+                    تست اتصال به API
+                  </>
+                )}
+              </button>
+
+              {apiTestResult && (
+                <div
+                  className={`mt-3 p-3 rounded-lg ${
+                    apiTestResult.success
+                      ? "bg-green-50 text-green-800 border border-green-200"
+                      : "bg-red-50 text-red-800 border border-red-200"
+                  }`}
+                >
+                  <div className="flex">
+                    {apiTestResult.success ? (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5 text-green-500 ml-2"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5 text-red-500 ml-2"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                    {apiTestResult.message}
+                  </div>
+                </div>
+              )}
+            </div>
+          </SettingsCard>
           {/* Database Connection Settings */}
           <SettingsCard
             title="اطلاعات اولیه دیتابیس PostgreSQL"

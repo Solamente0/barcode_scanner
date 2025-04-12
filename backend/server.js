@@ -1,9 +1,12 @@
 // server.js
 const express = require("express");
 const cors = require("cors");
-const { Pool } = require("pg");
 const bodyParser = require("body-parser");
 require("dotenv").config();
+
+// Dynamically import database libraries based on configuration
+const pg = require("pg");
+const sql = require("mssql");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -12,6 +15,10 @@ const port = process.env.PORT || 5000;
 console.log("===== BARCODE SCANNER API SERVER =====");
 console.log(`Starting server with NODE_ENV: ${process.env.NODE_ENV}`);
 console.log(`Loading configuration from .env file...`);
+
+// Database type - defaults to postgres if not specified
+const DB_TYPE = (process.env.DB_TYPE || "postgres").toLowerCase();
+console.log(`Database type: ${DB_TYPE}`);
 
 // CORS configuration
 const corsOptions = {
@@ -73,20 +80,76 @@ app.use((req, res, next) => {
 
 // Database configuration
 const getDbConfig = (customConfig = null) => {
-  const config = customConfig || {
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    host: process.env.DB_SERVER,
-    port: process.env.DB_PORT || 5432,
-    database: process.env.DB_NAME,
-    ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false,
-  };
+  if (customConfig) {
+    // Log database config with password masked
+    const loggableConfig = { ...customConfig, password: "******" };
+    console.log("Custom Database Configuration:", loggableConfig);
+    return customConfig;
+  }
+
+  let config;
+
+  if (DB_TYPE === "mssql") {
+    // SQL Server configuration
+    config = {
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      server: process.env.DB_SERVER,
+      port: parseInt(process.env.DB_PORT) || 1433, // Default SQL Server port
+      database: process.env.DB_NAME,
+      options: {
+        encrypt: process.env.DB_ENCRYPT === "true", // For Azure
+        trustServerCertificate: process.env.DB_TRUST_SERVER_CERT === "true", // For local dev / self-signed certs
+        enableArithAbort: true,
+      },
+    };
+  } else {
+    // PostgreSQL configuration (default)
+    config = {
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      host: process.env.DB_SERVER,
+      port: parseInt(process.env.DB_PORT) || 5432, // Default PostgreSQL port
+      database: process.env.DB_NAME,
+      ssl:
+        process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false,
+    };
+  }
 
   // Log database config with password masked
   const loggableConfig = { ...config, password: "******" };
-  console.log("Database Configuration:", loggableConfig);
+  console.log(`Database Configuration (${DB_TYPE}):`, loggableConfig);
 
   return config;
+};
+
+// Format SQL query based on DB type
+const formatQuery = (query, params = []) => {
+  if (DB_TYPE === "mssql") {
+    // Replace PostgreSQL parameter placeholders ($1, $2) with MSSQL parameter placeholders (@param1, @param2)
+    let mssqlQuery = query;
+    for (let i = 0; i < params.length; i++) {
+      mssqlQuery = mssqlQuery.replace(
+        new RegExp(`\\$${i + 1}`, "g"),
+        `@param${i + 1}`,
+      );
+    }
+
+    // Replace all table and column references with bracketed format for SQL Server
+    // This is a simplified approach - for complex queries with joins or subqueries
+    // you may need more sophisticated parsing
+
+    // Add brackets to table names and column names (assuming they're already properly escaped)
+    return mssqlQuery;
+  }
+
+  // For PostgreSQL, return the original query
+  return query;
+};
+
+// Add brackets to SQL Server identifiers if needed
+const bracketIdentifier = (identifier) => {
+  return DB_TYPE === "mssql" ? `[${identifier}]` : identifier;
 };
 
 // Execute database query
@@ -94,20 +157,58 @@ async function connectAndQuery(query, params = [], customConfig = null) {
   console.log(`Executing query: ${query}`);
   console.log(`Query parameters:`, params);
 
-  const pool = new Pool(getDbConfig(customConfig));
-  console.log(`Database pool created`);
+  const config = getDbConfig(customConfig);
 
-  try {
-    console.log(`Executing query...`);
-    const result = await pool.query(query, params);
-    console.log(`Query successful, ${result.rows.length} rows returned`);
-    return result.rows;
-  } catch (err) {
-    console.error("PostgreSQL error:", err);
-    throw err;
-  } finally {
-    console.log(`Closing database pool`);
-    await pool.end();
+  if (DB_TYPE === "mssql") {
+    // SQL Server query execution
+    console.log(`Creating SQL Server connection pool`);
+    let pool = null;
+
+    try {
+      pool = await sql.connect(config);
+      console.log(`Database pool created`);
+
+      // Create request with parameters
+      const request = pool.request();
+
+      // Add parameters to request
+      params.forEach((param, index) => {
+        request.input(`param${index + 1}`, param);
+      });
+
+      // Format the query for SQL Server
+      const formattedQuery = formatQuery(query, params);
+
+      console.log(`Executing SQL Server query...`);
+      const result = await request.query(formattedQuery);
+      console.log(`Query successful, ${result.recordset.length} rows returned`);
+      return result.recordset;
+    } catch (err) {
+      console.error("SQL Server error:", err);
+      throw err;
+    } finally {
+      if (pool) {
+        console.log(`Closing database pool`);
+        await pool.close();
+      }
+    }
+  } else {
+    // PostgreSQL query execution
+    console.log(`Creating PostgreSQL pool`);
+    const pool = new pg.Pool(config);
+
+    try {
+      console.log(`Executing PostgreSQL query...`);
+      const result = await pool.query(query, params);
+      console.log(`Query successful, ${result.rows.length} rows returned`);
+      return result.rows;
+    } catch (err) {
+      console.error("PostgreSQL error:", err);
+      throw err;
+    } finally {
+      console.log(`Closing database pool`);
+      await pool.end();
+    }
   }
 }
 
@@ -127,6 +228,7 @@ app.get("/api/settings", async (req, res) => {
     res.json({
       status: "success",
       message: "Connected to database",
+      dbType: process.env.DB_TYPE || "postgres",
       dbName: process.env.DB_NAME,
     });
 
@@ -161,17 +263,27 @@ app.get("/api/product/:barcode", async (req, res) => {
     if (barcodeTableName && barcodeColumnName && productCodeColumnName) {
       console.log(`Searching for barcode in ${barcodeTableName} table`);
 
+      // Create appropriate query for the database type
+      const bColumnName = bracketIdentifier(barcodeColumnName);
+      const pColumnName = bracketIdentifier(productCodeColumnName);
+      const bTableName = bracketIdentifier(barcodeTableName);
+
       const barcodeQuery = `
-        SELECT ${productCodeColumnName} 
-        FROM ${barcodeTableName} 
-        WHERE ${barcodeColumnName} = $1
+        SELECT ${pColumnName} 
+        FROM ${bTableName} 
+        WHERE ${bColumnName} = $1
       `;
 
       const barcodeResult = await connectAndQuery(barcodeQuery, [barcode]);
 
       if (barcodeResult && barcodeResult.length > 0) {
-        // Found product code in barcode table
-        productCode = barcodeResult[0][productCodeColumnName.toLowerCase()];
+        // Handle different property name conventions between the two database types
+        const resultKey =
+          DB_TYPE === "mssql"
+            ? productCodeColumnName
+            : productCodeColumnName.toLowerCase();
+
+        productCode = barcodeResult[0][resultKey];
         console.log(`Found product code in barcode table: ${productCode}`);
       } else {
         console.log(`Barcode not found in ${barcodeTableName} table`);
@@ -206,16 +318,25 @@ app.get("/api/product/:barcode", async (req, res) => {
       ],
     });
 
+    // Format column and table names for the appropriate database
+    const pTable = bracketIdentifier(productsTableName);
+    const codeCol = bracketIdentifier(productCodeColumn);
+    const nameCol = bracketIdentifier(productNameColumn);
+    const imageCol = bracketIdentifier(productImageColumn);
+    const price1Col = bracketIdentifier(productPrice1Column);
+    const price2Col = bracketIdentifier(productPrice2Column);
+    const price3Col = bracketIdentifier(productPrice3Column);
+
     const productQuery = `
       SELECT 
-        ${productCodeColumn} as "productCode", 
-        ${productNameColumn} as "productName", 
-        ${productImageColumn} as "productImage",
-        ${productPrice1Column} as "price1",
-        ${productPrice2Column} as "price2",
-        ${productPrice3Column} as "price3"
-      FROM ${productsTableName} 
-      WHERE ${productCodeColumn} = $1
+        ${codeCol} as "productCode", 
+        ${nameCol} as "productName", 
+        ${imageCol} as "productImage",
+        ${price1Col} as "price1",
+        ${price2Col} as "price2",
+        ${price3Col} as "price3"
+      FROM ${pTable} 
+      WHERE ${codeCol} = $1
     `;
 
     console.log(
@@ -249,11 +370,24 @@ app.post("/api/settings", async (req, res) => {
     });
 
     // Update environment variables
+    process.env.DB_TYPE = settings.dbType || "postgres";
     process.env.DB_SERVER = settings.dbServer;
-    process.env.DB_PORT = settings.dbPort || "5432";
+    process.env.DB_PORT =
+      settings.dbPort || (settings.dbType === "mssql" ? "1433" : "5432");
     process.env.DB_NAME = settings.dbName;
     process.env.DB_USER = settings.dbUser;
     process.env.DB_PASSWORD = settings.dbPassword;
+
+    // SQL Server specific settings
+    if (settings.dbType === "mssql") {
+      process.env.DB_ENCRYPT = settings.dbEncrypt || "false";
+      process.env.DB_TRUST_SERVER_CERT = settings.dbTrustServerCert || "false";
+    } else {
+      // PostgreSQL specific settings
+      process.env.DB_SSL = settings.dbSsl || "false";
+    }
+
+    // Common table/column settings
     process.env.BARCODE_TABLE = settings.barcodeTable;
     process.env.BARCODE_COLUMN = settings.barcodeColumn;
     process.env.PRODUCT_CODE_COLUMN = settings.productCodeColumn;
@@ -278,28 +412,76 @@ app.post("/api/settings", async (req, res) => {
 app.post("/api/test-connection", async (req, res) => {
   console.log("POST /api/test-connection: Testing database connection");
 
-  const { dbServer, dbPort, dbName, dbUser, dbPassword } = req.body;
+  const {
+    dbType = "postgres",
+    dbServer,
+    dbPort,
+    dbName,
+    dbUser,
+    dbPassword,
+    dbSsl,
+    dbEncrypt,
+    dbTrustServerCert,
+  } = req.body;
+
   console.log("Connection test parameters (password masked):", {
+    dbType,
     dbServer,
     dbPort,
     dbName,
     dbUser,
     dbPassword: dbPassword ? "******" : undefined,
+    dbSsl,
+    dbEncrypt,
+    dbTrustServerCert,
   });
 
-  const testConfig = {
-    user: dbUser,
-    password: dbPassword,
-    host: dbServer,
-    port: dbPort || 5432,
-    database: dbName,
-    ssl: false,
-  };
+  let testConfig;
+
+  if (dbType === "mssql") {
+    // SQL Server configuration
+    testConfig = {
+      user: dbUser,
+      password: dbPassword,
+      server: dbServer,
+      port: parseInt(dbPort) || 1433,
+      database: dbName,
+      options: {
+        encrypt: dbEncrypt === true || dbEncrypt === "true",
+        trustServerCertificate:
+          dbTrustServerCert === true || dbTrustServerCert === "true",
+        enableArithAbort: true,
+      },
+    };
+  } else {
+    // PostgreSQL configuration
+    testConfig = {
+      user: dbUser,
+      password: dbPassword,
+      host: dbServer,
+      port: parseInt(dbPort) || 5432,
+      database: dbName,
+      ssl:
+        dbSsl === true || dbSsl === "true"
+          ? { rejectUnauthorized: false }
+          : false,
+    };
+  }
 
   try {
-    // Test connection by executing a simple query
-    console.log("Testing connection with simple query: SELECT NOW()");
-    await connectAndQuery("SELECT NOW()", [], testConfig);
+    // Test query depends on database type
+    const testQuery =
+      dbType === "mssql" ? "SELECT GETDATE() as currentTime" : "SELECT NOW()";
+    console.log(`Testing connection with query: ${testQuery}`);
+
+    // Temporarily override the DB_TYPE for this connection test
+    const originalDbType = process.env.DB_TYPE;
+    process.env.DB_TYPE = dbType;
+
+    await connectAndQuery(testQuery, [], testConfig);
+
+    // Restore the original DB_TYPE
+    process.env.DB_TYPE = originalDbType;
 
     console.log("Database connection test successful!");
     res.json({ status: "success", message: "Connection successful" });
@@ -322,6 +504,7 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
+  console.log(`Database type: ${DB_TYPE}`);
   console.log(`CORS enabled for: ${corsOptions.origin.join(", ")}`);
   console.log(`Database server: ${process.env.DB_SERVER || "Not configured"}`);
   console.log(`Database name: ${process.env.DB_NAME || "Not configured"}`);

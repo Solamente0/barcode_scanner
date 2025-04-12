@@ -35,7 +35,12 @@ const ScannerPage = () => {
       navigate("/settings");
     }
   }, [areSettingsConfigured, navigate, isLoaded]);
-
+  useEffect(() => {
+    if (isLoaded && areSettingsConfigured()) {
+      // Refresh the API service to use the new server/port settings
+      apiService.updateBaseUrl();
+    }
+  }, [settings, isLoaded, areSettingsConfigured]);
   // Handle keyboard input for price type selection
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -124,7 +129,7 @@ const ScannerPage = () => {
     <div className="container mx-auto px-2 py-2" style={{ direction: "rtl" }}>
       {" "}
       {/* MODIFIED: reduced padding from p-4 to px-2 py-2 */}
-      <div className="mb-3">
+      <div className="mb-2">
         {" "}
         {/* MODIFIED: reduced margin from mb-6 to mb-3 */}
         <BarcodeScanner onBarcodeScanned={handleBarcodeScanned} />

@@ -172,7 +172,7 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
   if (!isCameraAvailable || error) {
     return (
       <div className="rounded-lg overflow-hidden shadow-lg bg-white border border-gray-200">
-        <div className="bg-yellow-50 border-b border-yellow-200 p-4 mb-4">
+        <div className="bg-yellow-50 border-b border-yellow-200 p-3 mb-3">
           <div className="flex items-start">
             <div className="flex-shrink-0">
               <svg
@@ -240,9 +240,9 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
           muted
         />
 
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-32 h-32 border-2 border-orange-500 rounded-lg opacity-80 pulse"></div>
-        </div>
+        {/*<div className="absolute inset-0 flex items-center justify-center">*/}
+        {/*  <div className="w- h-32 border-2 border-orange-500 rounded-lg opacity-80 pulse"></div>*/}
+        {/*</div>*/}
 
         {/* Scanning line animation */}
         {isScanning && <div className="scanning-line"></div>}
@@ -260,7 +260,7 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
-              className="w-6 h-6"
+              className="w-6 h-6" // Changed from w-6 h-6
             >
               <path
                 strokeLinecap="round"
@@ -351,7 +351,7 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
       </div>
 
       <div
-        className={`p-3 text-center text-white font-medium ${isScanning ? "bg-orange-600" : "bg-gray-500"}`}
+        className={`py-1 px-3 text-center text-white font-medium ${isScanning ? "bg-orange-600" : "bg-gray-500"}`}
       >
         <p>
           {isScanning
@@ -363,7 +363,7 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
       {/* Manual barcode input option */}
       <form
         onSubmit={handleManualSubmit}
-        className="p-2 border-t border-gray-200"
+        className="p-1 border-t border-gray-200" // Changed from p-2
       >
         <div className="flex">
           <input
@@ -371,12 +371,12 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
             value={manualBarcode}
             onChange={(e) => setManualBarcode(e.target.value)}
             placeholder="یا بارکد را اینجا وارد کنید"
-            className="flex-1 p-2 border border-gray-300 rounded-r focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="flex-1 py-1 px-2 border border-gray-300 rounded-r focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             dir="ltr"
           />
           <button
             type="submit"
-            className="bg-orange-600 text-white px-6 py-3 rounded-l hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors duration-200"
+            className="bg-orange-600 text-white px-4 py-2 rounded-l hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors duration-200"
           >
             جستجو
           </button>

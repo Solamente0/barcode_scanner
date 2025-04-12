@@ -103,14 +103,14 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
         {/* Product Info */}
         <div className="flex-grow text-right space-y-2">
           <div className="bg-orange-50 inline-block px-3 py-1 rounded-full">
-            <span className="text-gray-600 text-sm ml-1">کدمحصول:</span>
+            <span className="text-gray-600 text-sm ml-1">کد محصول:</span>
             <span className="font-semibold text-orange-800 dirRtl">
               {product.productCode}
             </span>
           </div>
 
           <div>
-            <h2 className="text-lg font-bold text-gray-800 line-clamp-2">
+            <h2 className="text-lg font-bold text-gray-800 line-clamp-2 mr-3 dirRtl">
               {product.productName}
             </h2>
           </div>

@@ -5,11 +5,16 @@ export const SettingsContext = createContext();
 
 // Default PostgreSQL settings
 const defaultSettings = {
+  // API Details:
+  apiServer: "localhost",
+  apiPort: "5000",
+  // DB Details:
   dbServer: "localhost",
   dbPort: "5432",
   dbName: "barcode_scanner",
   dbUser: "postgres",
   dbPassword: "",
+  // TABLE & Column Details
   barcodeTable: "barcodes",
   barcodeColumn: "barcode",
   productCodeColumn: "product_code",
