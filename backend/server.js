@@ -79,8 +79,22 @@ app.use((req, res, next) => {
 });
 
 // Database configuration
+
+// Fix for database connection - modify the getDbConfig function (around line 80)
 const getDbConfig = (customConfig = null) => {
   if (customConfig) {
+    // Make sure server is defined and is a string
+    if (!customConfig.server && customConfig.dbServer) {
+      customConfig.server = customConfig.dbServer;
+    }
+
+    // Ensure server is a string
+    if (customConfig.server === undefined || customConfig.server === null) {
+      throw new Error(
+        "The 'config.server' property is required and must be of type string.",
+      );
+    }
+
     // Log database config with password masked
     const loggableConfig = { ...customConfig, password: "******" };
     console.log("Custom Database Configuration:", loggableConfig);
@@ -94,7 +108,7 @@ const getDbConfig = (customConfig = null) => {
     config = {
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
-      server: process.env.DB_SERVER,
+      server: process.env.DB_SERVER || "localhost", // Set default if undefined
       port: parseInt(process.env.DB_PORT) || 1433, // Default SQL Server port
       database: process.env.DB_NAME,
       options: {
@@ -108,7 +122,7 @@ const getDbConfig = (customConfig = null) => {
     config = {
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
-      host: process.env.DB_SERVER,
+      host: process.env.DB_SERVER || "localhost", // Set default if undefined
       port: parseInt(process.env.DB_PORT) || 5432, // Default PostgreSQL port
       database: process.env.DB_NAME,
       ssl:
@@ -122,7 +136,6 @@ const getDbConfig = (customConfig = null) => {
 
   return config;
 };
-
 // Format SQL query based on DB type
 const formatQuery = (query, params = []) => {
   if (DB_TYPE === "mssql") {
@@ -215,6 +228,15 @@ async function connectAndQuery(query, params = [], customConfig = null) {
 // Pre-flight OPTIONS request handler
 app.options("*", cors(corsOptions));
 console.log("OPTIONS pre-flight handler configured");
+
+app.get("/api/ping", (req, res) => {
+  console.log("GET /api/ping: Checking API availability");
+  res.json({
+    status: "success",
+    message: "API is available",
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // API endpoint for settings
 app.get("/api/settings", async (req, res) => {
@@ -443,7 +465,7 @@ app.post("/api/test-connection", async (req, res) => {
     testConfig = {
       user: dbUser,
       password: dbPassword,
-      server: dbServer,
+      server: dbServer, // This is the key issue - ensure it's present
       port: parseInt(dbPort) || 1433,
       database: dbName,
       options: {
@@ -458,7 +480,7 @@ app.post("/api/test-connection", async (req, res) => {
     testConfig = {
       user: dbUser,
       password: dbPassword,
-      host: dbServer,
+      host: dbServer, // Different name but same purpose as 'server' in mssql
       port: parseInt(dbPort) || 5432,
       database: dbName,
       ssl:
@@ -466,6 +488,28 @@ app.post("/api/test-connection", async (req, res) => {
           ? { rejectUnauthorized: false }
           : false,
     };
+  }
+
+  // Validate that required fields are present
+  if (!dbServer) {
+    return res.status(400).json({
+      status: "error",
+      message: "The database server address is required",
+    });
+  }
+
+  if (!dbName) {
+    return res.status(400).json({
+      status: "error",
+      message: "The database name is required",
+    });
+  }
+
+  if (!dbUser) {
+    return res.status(400).json({
+      status: "error",
+      message: "The database username is required",
+    });
   }
 
   try {
@@ -487,7 +531,10 @@ app.post("/api/test-connection", async (req, res) => {
     res.json({ status: "success", message: "Connection successful" });
   } catch (error) {
     console.error("Connection test failed:", error);
-    res.status(500).json({ status: "error", message: error.message });
+    res.status(500).json({
+      status: "error",
+      message: `Connection failed: ${error.message || "Unknown error"}`,
+    });
   }
 });
 
