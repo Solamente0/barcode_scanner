@@ -172,6 +172,25 @@ async function connectAndQuery(query, params = [], customConfig = null) {
 
   const config = getDbConfig(customConfig);
 
+  // Validate configuration
+  if (
+    DB_TYPE === "mssql" &&
+    (!config.server || typeof config.server !== "string")
+  ) {
+    throw new Error(
+      "The 'config.server' property is required and must be of type string.",
+    );
+  }
+
+  if (
+    DB_TYPE === "postgres" &&
+    (!config.host || typeof config.host !== "string")
+  ) {
+    throw new Error(
+      "The 'config.host' property is required and must be of type string.",
+    );
+  }
+
   if (DB_TYPE === "mssql") {
     // SQL Server query execution
     console.log(`Creating SQL Server connection pool`);
@@ -431,6 +450,9 @@ app.post("/api/settings", async (req, res) => {
 });
 
 // Test database connection
+// Replace the test-connection endpoint in server.js with this fixed version:
+
+// Test database connection
 app.post("/api/test-connection", async (req, res) => {
   console.log("POST /api/test-connection: Testing database connection");
 
@@ -445,6 +467,21 @@ app.post("/api/test-connection", async (req, res) => {
     dbEncrypt,
     dbTrustServerCert,
   } = req.body;
+
+  // Validate required fields first
+  if (!dbServer) {
+    return res.status(400).json({
+      status: "error",
+      message: "Database server address is required",
+    });
+  }
+
+  if (!dbName) {
+    return res.status(400).json({
+      status: "error",
+      message: "Database name is required",
+    });
+  }
 
   console.log("Connection test parameters (password masked):", {
     dbType,
@@ -465,7 +502,7 @@ app.post("/api/test-connection", async (req, res) => {
     testConfig = {
       user: dbUser,
       password: dbPassword,
-      server: dbServer, // This is the key issue - ensure it's present
+      server: String(dbServer), // Ensure server is a string
       port: parseInt(dbPort) || 1433,
       database: dbName,
       options: {
@@ -480,7 +517,7 @@ app.post("/api/test-connection", async (req, res) => {
     testConfig = {
       user: dbUser,
       password: dbPassword,
-      host: dbServer, // Different name but same purpose as 'server' in mssql
+      host: String(dbServer), // Ensure host is a string
       port: parseInt(dbPort) || 5432,
       database: dbName,
       ssl:
@@ -488,28 +525,6 @@ app.post("/api/test-connection", async (req, res) => {
           ? { rejectUnauthorized: false }
           : false,
     };
-  }
-
-  // Validate that required fields are present
-  if (!dbServer) {
-    return res.status(400).json({
-      status: "error",
-      message: "The database server address is required",
-    });
-  }
-
-  if (!dbName) {
-    return res.status(400).json({
-      status: "error",
-      message: "The database name is required",
-    });
-  }
-
-  if (!dbUser) {
-    return res.status(400).json({
-      status: "error",
-      message: "The database username is required",
-    });
   }
 
   try {
@@ -537,7 +552,6 @@ app.post("/api/test-connection", async (req, res) => {
     });
   }
 });
-
 // Error handler middleware
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err);

@@ -42,13 +42,35 @@ const SettingsPage = () => {
     setErrorMessage("");
 
     try {
+      // Make sure all values are strings to prevent the 'config.server' type error
       const connectionData = {
-        dbServer: formData.dbServer,
-        dbPort: formData.dbPort || "5432",
-        dbName: formData.dbName,
-        dbUser: formData.dbUser,
-        dbPassword: formData.dbPassword,
+        dbType: formData.dbType || "postgres",
+        dbServer: String(formData.dbServer || ""),
+        dbPort: String(formData.dbPort || "5432"),
+        dbName: String(formData.dbName || ""),
+        dbUser: String(formData.dbUser || ""),
+        dbPassword: String(formData.dbPassword || ""),
+        dbSsl: formData.dbSsl,
       };
+
+      // Check required fields before sending
+      if (!connectionData.dbServer) {
+        setTestResult({
+          success: false,
+          message: "آدرس سرور دیتابیس الزامی است",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      if (!connectionData.dbName) {
+        setTestResult({
+          success: false,
+          message: "نام دیتابیس الزامی است",
+        });
+        setIsLoading(false);
+        return;
+      }
 
       // Using result indirectly through setTestResult
       await apiService.testConnection(connectionData);
@@ -65,7 +87,6 @@ const SettingsPage = () => {
       setIsLoading(false);
     }
   };
-
   // Add handler function for API test button
   const handleTestApiConnection = async (e) => {
     e.preventDefault();
