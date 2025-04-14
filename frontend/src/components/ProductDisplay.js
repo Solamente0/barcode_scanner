@@ -33,24 +33,19 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
     e.target.src = "/placeholder-image.png"; // Fallback image if product image fails to load
   };
 
-  const arrayBufferToBase64 = (buffer) => {
-    if (!buffer) return null;
+  const bufferToBase64 = (buffer) => {
+    if (!buffer || !buffer.data) return null;
 
-    // Handle different types of binary data
-    let uint8Array;
-    if (buffer instanceof ArrayBuffer) {
-      uint8Array = new Uint8Array(buffer);
-    } else if (ArrayBuffer.isView(buffer)) {
-      uint8Array = new Uint8Array(buffer.buffer);
-    } else if (Array.isArray(buffer)) {
-      uint8Array = new Uint8Array(buffer);
-    } else {
-      console.error("Unsupported buffer type");
+    try {
+      // Convert Buffer data to Uint8Array
+      const uint8Array = new Uint8Array(buffer.data);
+
+      // Use built-in browser method for base64 conversion
+      return btoa(String.fromCharCode.apply(null, uint8Array));
+    } catch (error) {
+      console.error("Error converting buffer to base64:", error);
       return null;
     }
-
-    // Use built-in browser method for more reliable base64 conversion
-    return btoa(String.fromCharCode.apply(null, uint8Array));
   };
 
   const imageSrc = useMemo(() => {
@@ -60,8 +55,8 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
         return product.productImage;
       }
 
-      // Convert binary image to base64
-      const base64Image = arrayBufferToBase64(product.productImage);
+      // Convert Buffer image to base64
+      const base64Image = bufferToBase64(product.productImage);
       return base64Image
         ? `data:image/jpeg;base64,${base64Image}`
         : "/placeholder-image.png";
