@@ -26,14 +26,13 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
       // Reset previous scanning
       codeReaderRef.current.reset();
 
-      // Define camera constraints - using lower resolution for faster processing
-      // and adding torch/flash if available for better scanning in low light
+      // More flexible camera constraints for better Android compatibility
       const constraints = {
         video: {
-          facingMode: cameraFacingMode,
-          width: { ideal: 640 }, // Lower resolution for faster processing
-          height: { ideal: 480 }, // Lower resolution for faster processing
-          advanced: [{ torch: true }], // Turn on flash/torch if available
+          facingMode: { ideal: cameraFacingMode },
+          width: { min: 320, ideal: 640, max: 1280 },
+          height: { min: 240, ideal: 480, max: 720 },
+          aspectRatio: { ideal: 1.333 }, // 4:3 aspect ratio
         },
       };
 
@@ -42,7 +41,7 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
         cameraFacingMode,
       );
 
-      // Start continuous scanning with better error handling and debug logging
+      // Start continuous scanning with more robust error handling
       await codeReaderRef.current.decodeFromConstraints(
         constraints,
         videoRef.current,
@@ -52,9 +51,13 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
           if (result) {
             console.log("Barcode detected:", result);
             let barcodeValue = result.getText();
+
+            // Remove trailing 'q' if present
             if (barcodeValue.endsWith("q")) {
               barcodeValue = barcodeValue.slice(0, -1);
-            } // More permissive duplicate handling (500ms cooldown)
+            }
+
+            // More permissive duplicate handling (500ms cooldown)
             const now = Date.now();
             if (
               barcodeValue !== lastScannedBarcode ||
@@ -67,7 +70,7 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
             }
           }
 
-          // Only log real errors, not normal "no barcode found" errors
+          // More comprehensive error logging
           if (
             error &&
             !(error instanceof TypeError) &&
@@ -83,14 +86,24 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
     } catch (err) {
       console.error("Failed to start scanner:", err);
 
+      // Detailed error handling for Android
+      const errorMessage = err.message.toLowerCase();
+      let userFriendlyError = "دسترسی به دوربین ممکن نیست";
+
+      if (errorMessage.includes("permission")) {
+        userFriendlyError = "لطفا دسترسی به دوربین را تایید کنید";
+      } else if (errorMessage.includes("device")) {
+        userFriendlyError = "دوربین دستگاه شما شناسایی نشد";
+      } else if (errorMessage.includes("constraint")) {
+        userFriendlyError = "تنظیمات دوربین با مشکل مواجه شده است";
+      }
+
       // Try fallback to other camera if this is the first attempt
       if (cameraFacingMode === "environment") {
         setCameraFacingMode("user");
-        // We don't call startScanner directly to avoid potential issues
-        // It will be triggered by the useEffect when cameraFacingMode changes
       } else {
         setIsCameraAvailable(false);
-        setError(`خطای دوربین: ${err.message || "دسترسی به دوربین ممکن نیست"}`);
+        setError(`خطای دوربین: ${userFriendlyError}`);
       }
     }
   }, [
@@ -130,7 +143,7 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
 
     // Create reader with more inclusive settings and faster scanning rate
     const reader = new BrowserMultiFormatReader(hints, {
-      delayBetweenScanAttempts: 50,
+      delayBetweenScanAttempts: 100, // Slightly increased for better performance
     });
     codeReaderRef.current = reader;
 
@@ -145,7 +158,9 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
 
   // Effect to start scanner when camera mode changes or when first mounted
   useEffect(() => {
-    startScanner();
+    // Add a small delay to ensure DOM is ready
+    const timeoutId = setTimeout(startScanner, 100);
+    return () => clearTimeout(timeoutId);
   }, [startScanner]);
 
   // Handle camera switching
