@@ -51,9 +51,10 @@ const BarcodeScanner = ({ onBarcodeScanned }) => {
 
           if (result) {
             console.log("Barcode detected:", result);
-            const barcodeValue = result.getText();
-
-            // More permissive duplicate handling (500ms cooldown)
+            let barcodeValue = result.getText();
+            if (barcodeValue.endsWith("q")) {
+              barcodeValue = barcodeValue.slice(0, -1);
+            } // More permissive duplicate handling (500ms cooldown)
             const now = Date.now();
             if (
               barcodeValue !== lastScannedBarcode ||

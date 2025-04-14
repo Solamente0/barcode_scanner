@@ -1,5 +1,4 @@
-// src/components/ProductDisplay.js
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 
 const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -34,20 +33,55 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
     e.target.src = "/placeholder-image.png"; // Fallback image if product image fails to load
   };
 
-  // Handle price type selection
+  const arrayBufferToBase64 = (buffer) => {
+    if (!buffer) return null;
+
+    // Handle different types of binary data
+    let uint8Array;
+    if (buffer instanceof ArrayBuffer) {
+      uint8Array = new Uint8Array(buffer);
+    } else if (ArrayBuffer.isView(buffer)) {
+      uint8Array = new Uint8Array(buffer.buffer);
+    } else if (Array.isArray(buffer)) {
+      uint8Array = new Uint8Array(buffer);
+    } else {
+      console.error("Unsupported buffer type");
+      return null;
+    }
+
+    // Use built-in browser method for more reliable base64 conversion
+    return btoa(String.fromCharCode.apply(null, uint8Array));
+  };
+
+  const imageSrc = useMemo(() => {
+    if (product?.productImage) {
+      // Check if it's already a string (URL or base64)
+      if (typeof product.productImage === "string") {
+        return product.productImage;
+      }
+
+      // Convert binary image to base64
+      const base64Image = arrayBufferToBase64(product.productImage);
+      return base64Image
+        ? `data:image/jpeg;base64,${base64Image}`
+        : "/placeholder-image.png";
+    } else {
+      // Fallback
+      return "/placeholder-image.png";
+    }
+  }, [product?.productImage]);
+
+  // Rest of the component remains the same...
   const handlePriceTypeSelect = (type) => {
     onPriceTypeChange(type);
   };
 
-  // Format price with commas for thousands
   const formatPrice = (price) => {
     if (!price) return "0";
-    // Convert to integer first by removing decimal part
     const intPrice = Math.floor(parseFloat(price));
     return intPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
-  // Determine which price to show based on selected price type
   const getCurrentPrice = () => {
     switch (priceType) {
       case 1:
@@ -92,7 +126,7 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
             </div>
           )}
           <img
-            src={product.productImage || "/placeholder-image.png"}
+            src={imageSrc}
             alt={product.productName}
             className="w-full h-full object-cover"
             onLoad={() => setIsLoading(false)}
@@ -100,7 +134,7 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
           />
         </div>
 
-        {/* Product Info */}
+        {/* Rest of the component remains the same */}
         <div className="flex-grow text-right space-y-2">
           <div className="bg-orange-50 inline-block px-3 py-1 rounded-full">
             <span className="text-gray-600 text-sm ml-1">کد محصول:</span>
@@ -138,7 +172,7 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
                 : "bg-gray-50 text-gray-700 hover:bg-gray-100"
             }`}
           >
-            تیپ قیمت {type}
+            {type}
           </button>
         ))}
       </div>
