@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 
 const SettingsPage = () => {
   const { settings, updateSettings } = useContext(SettingsContext);
-  const [formData, setFormData] = useState({ ...settings });
   const [isLoading, setIsLoading] = useState(false);
   const [testResult, setTestResult] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
@@ -17,22 +16,32 @@ const SettingsPage = () => {
   const [isApiTesting, setIsApiTesting] = useState(false);
   const [apiTestResult, setApiTestResult] = useState(null);
 
-  // Initialize with default PostgreSQL port if empty
+  // Initialize form with settings when component mounts or settings change
   useEffect(() => {
-    if (!formData.dbPort) {
-      setFormData((prev) => ({ ...prev, dbPort: "5432" }));
+    // This will handle initial population of form fields from settings
+    // This won't cause focus issues since it's not during user typing
+    const form = formRef.current;
+    if (form) {
+      Object.entries(settings).forEach(([key, value]) => {
+        const input = form.elements[key];
+        if (input && !input.matches(":focus")) {
+          // Only update if the field is not currently focused
+          input.value = value || "";
+        }
+      });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run on component mount
+  }, [settings]);
 
-  // Handle form input changes
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
-  };
+  // Set default PostgreSQL port if empty
+  useEffect(() => {
+    const form = formRef.current;
+    if (form) {
+      const portField = form.elements["dbPort"];
+      if (portField && !portField.value) {
+        portField.value = "5432";
+      }
+    }
+  }, []);
 
   // Test database connection
   const handleTestConnection = async (e) => {
@@ -42,19 +51,21 @@ const SettingsPage = () => {
     setErrorMessage("");
 
     try {
-      // Make sure all values are strings to prevent the 'config.server' type error
+      // Collect form data directly from the form
+      const form = formRef.current;
       const connectionData = {
-        dbType: formData.dbType || "postgres",
-        dbServer: String(formData.dbServer || ""),
+        dbType: form.elements.dbType.value || "postgres",
+        dbServer: String(form.elements.dbServer.value || ""),
         // For MS SQL, explicitly set server for backward compatibility
-        server: String(formData.dbServer || ""),
+        server: String(form.elements.dbServer.value || ""),
         dbPort: String(
-          formData.dbPort || (formData.dbType === "mssql" ? "1433" : "5432"),
+          form.elements.dbPort.value ||
+            (form.elements.dbType.value === "mssql" ? "1433" : "5432"),
         ),
-        dbName: String(formData.dbName || ""),
-        dbUser: String(formData.dbUser || ""),
-        dbPassword: String(formData.dbPassword || ""),
-        dbSsl: formData.dbSsl,
+        dbName: String(form.elements.dbName.value || ""),
+        dbUser: String(form.elements.dbUser.value || ""),
+        dbPassword: String(form.elements.dbPassword.value || ""),
+        dbSsl: form.elements.dbSsl?.value,
       };
 
       // Check required fields before sending
@@ -90,17 +101,20 @@ const SettingsPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }; // Add handler function for API test button
+  };
+
+  // Handle API test button
   const handleTestApiConnection = async (e) => {
     e.preventDefault();
     setIsApiTesting(true);
     setApiTestResult(null);
 
     try {
-      const result = await apiService.testApiConnection(
-        formData.apiServer,
-        formData.apiPort,
-      );
+      const form = formRef.current;
+      const apiServer = form.elements.apiServer.value;
+      const apiPort = form.elements.apiPort.value;
+
+      const result = await apiService.testApiConnection(apiServer, apiPort);
       setApiTestResult(result);
     } catch (error) {
       setApiTestResult({
@@ -111,6 +125,7 @@ const SettingsPage = () => {
       setIsApiTesting(false);
     }
   };
+
   // Save settings
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -119,6 +134,17 @@ const SettingsPage = () => {
     setSuccessMessage("");
 
     try {
+      // Collect form data from form elements
+      const form = e.target;
+      const formData = {};
+
+      // Get all form elements with name attributes
+      Array.from(form.elements).forEach((element) => {
+        if (element.name) {
+          formData[element.name] = element.value;
+        }
+      });
+
       // Save to context first (which saves to localStorage)
       updateSettings(formData);
 
@@ -186,12 +212,12 @@ const SettingsPage = () => {
     );
   };
 
-  // Text input field component
+  // Text input field component - converted to uncontrolled
   const TextField = ({
     label,
     id,
     name,
-    value,
+    defaultValue,
     placeholder,
     required = false,
   }) => (
@@ -206,11 +232,12 @@ const SettingsPage = () => {
         type={name.includes("Password") ? "password" : "text"}
         id={id}
         name={name}
-        value={value}
-        onChange={handleChange}
+        defaultValue={defaultValue}
         className="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
         placeholder={placeholder}
         required={required}
+        dir="auto"
+        autoComplete="off"
       />
     </div>
   );
@@ -317,7 +344,7 @@ const SettingsPage = () => {
                 label="آدرس سرور API"
                 id="apiServer"
                 name="apiServer"
-                value={formData.apiServer}
+                defaultValue={settings.apiServer}
                 placeholder="localhost"
                 required={true}
               />
@@ -326,7 +353,7 @@ const SettingsPage = () => {
                 label="پورت سرور API"
                 id="apiPort"
                 name="apiPort"
-                value={formData.apiPort}
+                defaultValue={settings.apiPort}
                 placeholder="5000"
                 required={true}
               />
@@ -427,6 +454,7 @@ const SettingsPage = () => {
               )}
             </div>
           </SettingsCard>
+
           {/* Database Connection Settings */}
           <SettingsCard
             title="اطلاعات اولیه دیتابیس PostgreSQL"
@@ -459,8 +487,7 @@ const SettingsPage = () => {
                 <select
                   id="dbType"
                   name="dbType"
-                  value={formData.dbType || "postgres"}
-                  onChange={handleChange}
+                  defaultValue={settings.dbType || "postgres"}
                   className="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
                   required={true}
                 >
@@ -472,7 +499,7 @@ const SettingsPage = () => {
                 label="آیپی / هاست"
                 id="dbServer"
                 name="dbServer"
-                value={formData.dbServer}
+                defaultValue={settings.dbServer}
                 placeholder="localhost"
                 required={true}
               />
@@ -480,14 +507,14 @@ const SettingsPage = () => {
                 label="پورت"
                 id="dbPort"
                 name="dbPort"
-                value={formData.dbPort}
+                defaultValue={settings.dbPort}
                 placeholder="5432"
               />
               <TextField
                 label="نام دیتابیس"
                 id="dbName"
                 name="dbName"
-                value={formData.dbName}
+                defaultValue={settings.dbName}
                 placeholder="barcode_scanner"
                 required={true}
               />
@@ -495,7 +522,7 @@ const SettingsPage = () => {
                 label="یوزر"
                 id="dbUser"
                 name="dbUser"
-                value={formData.dbUser}
+                defaultValue={settings.dbUser}
                 placeholder="postgres"
                 required={true}
               />
@@ -503,7 +530,7 @@ const SettingsPage = () => {
                 label="پسورد"
                 id="dbPassword"
                 name="dbPassword"
-                value={formData.dbPassword}
+                defaultValue={settings.dbPassword}
                 placeholder="••••••••"
                 required={true}
               />
@@ -630,7 +657,7 @@ const SettingsPage = () => {
                 label="نام جدول"
                 id="barcodeTable"
                 name="barcodeTable"
-                value={formData.barcodeTable}
+                defaultValue={settings.barcodeTable}
                 placeholder="barcodes"
               />
 
@@ -638,7 +665,7 @@ const SettingsPage = () => {
                 label="نام ستون بارکد"
                 id="barcodeColumn"
                 name="barcodeColumn"
-                value={formData.barcodeColumn}
+                defaultValue={settings.barcodeColumn}
                 placeholder="barcode"
               />
 
@@ -646,7 +673,7 @@ const SettingsPage = () => {
                 label="نام ستون کدمحصول"
                 id="productCodeColumn"
                 name="productCodeColumn"
-                value={formData.productCodeColumn}
+                defaultValue={settings.productCodeColumn}
                 placeholder="product_code"
               />
             </div>
@@ -678,7 +705,7 @@ const SettingsPage = () => {
                 label="نام جدول"
                 id="productsTable"
                 name="productsTable"
-                value={formData.productsTable}
+                defaultValue={settings.productsTable}
                 placeholder="products"
                 required={true}
               />
@@ -687,7 +714,7 @@ const SettingsPage = () => {
                 label="نام ستون کدمحصول"
                 id="productsCodeColumn"
                 name="productsCodeColumn"
-                value={formData.productsCodeColumn}
+                defaultValue={settings.productsCodeColumn}
                 placeholder="product_code"
                 required={true}
               />
@@ -696,7 +723,7 @@ const SettingsPage = () => {
                 label="نام ستون اسم محصول"
                 id="productsNameColumn"
                 name="productsNameColumn"
-                value={formData.productsNameColumn}
+                defaultValue={settings.productsNameColumn}
                 placeholder="product_name"
                 required={true}
               />
@@ -705,7 +732,7 @@ const SettingsPage = () => {
                 label="نام ستون عکس محصول"
                 id="productsImageColumn"
                 name="productsImageColumn"
-                value={formData.productsImageColumn}
+                defaultValue={settings.productsImageColumn}
                 placeholder="product_image"
               />
 
@@ -713,7 +740,7 @@ const SettingsPage = () => {
                 label="نام ستون تیپ قیمت 1"
                 id="productsPrice1Column"
                 name="productsPrice1Column"
-                value={formData.productsPrice1Column}
+                defaultValue={settings.productsPrice1Column}
                 placeholder="price1"
                 required={true}
               />
@@ -722,7 +749,7 @@ const SettingsPage = () => {
                 label="نام ستون تیپ قیمت 2"
                 id="productsPrice2Column"
                 name="productsPrice2Column"
-                value={formData.productsPrice2Column}
+                defaultValue={settings.productsPrice2Column}
                 placeholder="price2"
               />
 
@@ -730,7 +757,7 @@ const SettingsPage = () => {
                 label="نام ستون تیپ قیمت 3"
                 id="productsPrice3Column"
                 name="productsPrice3Column"
-                value={formData.productsPrice3Column}
+                defaultValue={settings.productsPrice3Column}
                 placeholder="price3"
               />
             </div>
