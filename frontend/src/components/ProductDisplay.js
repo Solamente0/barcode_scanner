@@ -2,6 +2,23 @@ import React, { useMemo, useState } from "react";
 
 const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
   const [isLoading, setIsLoading] = useState(false);
+  // Move useMemo to the top, before any conditional returns
+  const imageSrc = useMemo(() => {
+    if (!product || !product.productImage) {
+      return "/placeholder-image.png";
+    }
+
+    // Check if it's already a string (URL or base64)
+    if (typeof product.productImage === "string") {
+      return product.productImage;
+    }
+
+    // Convert Buffer image to base64
+    const base64Image = bufferToBase64(product.productImage);
+    return base64Image
+      ? `data:image/jpeg;base64,${base64Image}`
+      : "/placeholder-image.png";
+  }, [product?.productImage]);
 
   if (!product) {
     return (
@@ -47,24 +64,6 @@ const ProductDisplay = ({ product, priceType, onPriceTypeChange }) => {
       return null;
     }
   };
-
-  const imageSrc = useMemo(() => {
-    if (product?.productImage) {
-      // Check if it's already a string (URL or base64)
-      if (typeof product.productImage === "string") {
-        return product.productImage;
-      }
-
-      // Convert Buffer image to base64
-      const base64Image = bufferToBase64(product.productImage);
-      return base64Image
-        ? `data:image/jpeg;base64,${base64Image}`
-        : "/placeholder-image.png";
-    } else {
-      // Fallback
-      return "/placeholder-image.png";
-    }
-  }, [product?.productImage]);
 
   // Rest of the component remains the same...
   const handlePriceTypeSelect = (type) => {
