@@ -11,7 +11,7 @@ const getApiBaseUrl = () => {
       const server = settings.apiServer || parts[0] || "localhost";
       const port = settings.apiPort || parts[1] || "5000";
 
-      return `https://${server}:${port}/api`;
+      return `http://${server}:${port}/api`;
     }
   } catch (error) {
     console.error("Error getting API settings:", error);
