@@ -2,15 +2,33 @@
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const https = require('https');
+const fs = require('fs');
+const path = require('path');
+
 require("dotenv").config();
 
 // Dynamically import database libraries based on configuration
 const pg = require("pg");
 const sql = require("mssql");
 
+const sslOptions = {
+  key: fs.readFileSync(path.join(__dirname, 'ssl', 'key.pem')),
+  cert: fs.readFileSync(path.join(__dirname, 'ssl', 'cert.pem'))
+};
+
+
 const app = express();
 const port = process.env.PORT || 5000;
-
+const https_port = process.env.HTTPS_PORT || 5001
+https.createServer(sslOptions, app).listen(https_port, () => {
+  console.log(`HTTPS Server running on port ${port}`);
+  console.log(`Database type: ${DB_TYPE}`);
+  console.log(`CORS enabled for: ${corsOptions.origin.join(", ")}`);
+  console.log(`Database server: ${process.env.DB_SERVER || "Not configured"}`);
+  console.log(`Database name: ${process.env.DB_NAME || "Not configured"}`);
+  console.log("=== SERVER READY ===");
+});
 // Log startup information
 console.log("===== BARCODE SCANNER API SERVER =====");
 console.log(`Starting server with NODE_ENV: ${process.env.NODE_ENV}`);
@@ -22,7 +40,8 @@ console.log(`Database type: ${DB_TYPE}`);
 
 // CORS configuration
 const corsOptions = {
-  origin: ["*"],
+//  origin: ["https://t-nfj0jwmb.tunn.dev"],
+  origin: ['*'],
 //  origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -37,7 +56,8 @@ console.log("CORS configuration:", {
 });
 
 // Middleware
-app.use(cors(corsOptions));
+//app.use(cors(corsOptions));
+app.use(cors());
 app.use(bodyParser.json());
 
 // Request logger middleware

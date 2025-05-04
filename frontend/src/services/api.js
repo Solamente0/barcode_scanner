@@ -66,7 +66,9 @@ export const apiService = {
   testApiConnection: async (serverAddress, serverPort) => {
     try {
       // Build a temporary URL for testing
-      const testUrl = `http://${serverAddress}:${serverPort}/api/ping`;
+      // const testUrl = `https://${serverAddress}:${serverPort}/api/ping`;
+      const testUrl = `https://${serverAddress}/api/ping`;
+
       console.log("Testing API connection at:", testUrl);
 
       // Create a temporary axios instance to avoid modifying the main one
