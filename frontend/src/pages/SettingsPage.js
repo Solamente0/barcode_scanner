@@ -15,33 +15,28 @@ const SettingsPage = () => {
   const navigate = useNavigate();
   const [isApiTesting, setIsApiTesting] = useState(false);
   const [apiTestResult, setApiTestResult] = useState(null);
+  const [formInitialized, setFormInitialized] = useState(false);
 
-  // Initialize form with settings when component mounts or settings change
+  // Initialize form with settings when component mounts ONLY
   useEffect(() => {
-    // This will handle initial population of form fields from settings
-    // This won't cause focus issues since it's not during user typing
-    const form = formRef.current;
-    if (form) {
+    if (!formInitialized && formRef.current) {
+      const form = formRef.current;
       Object.entries(settings).forEach(([key, value]) => {
         const input = form.elements[key];
-        if (input && !input.matches(":focus")) {
-          // Only update if the field is not currently focused
+        if (input) {
           input.value = value || "";
         }
       });
-    }
-  }, [settings]);
 
-  // Set default PostgreSQL port if empty
-  useEffect(() => {
-    const form = formRef.current;
-    if (form) {
+      // Set default PostgreSQL port if empty
       const portField = form.elements["dbPort"];
       if (portField && !portField.value) {
         portField.value = "5432";
       }
+
+      setFormInitialized(true);
     }
-  }, []);
+  }, [settings, formInitialized]);
 
   // Test database connection
   const handleTestConnection = async (e) => {
@@ -113,7 +108,8 @@ const SettingsPage = () => {
       const form = formRef.current;
       const apiServer = form.elements.apiServer.value;
       const apiPort = form.elements.apiPort.value;
-
+      console.log("===poortt===", apiPort);
+      console.log("===poortt===", apiServer);
       const result = await apiService.testApiConnection(apiServer, apiPort);
       setApiTestResult(result);
     } catch (error) {

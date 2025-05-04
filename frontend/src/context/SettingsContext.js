@@ -31,7 +31,7 @@ export const SettingsProvider = ({ children }) => {
   const [settings, setSettings] = useState(defaultSettings);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load settings from localStorage on initial render
+  // Load settings from localStorage on initial render only
   useEffect(() => {
     const loadSettings = () => {
       try {
@@ -51,7 +51,7 @@ export const SettingsProvider = ({ children }) => {
     };
 
     loadSettings();
-  }, []);
+  }, []); // Empty dependency array means this runs once on mount
 
   // Save settings to localStorage whenever they change
   useEffect(() => {

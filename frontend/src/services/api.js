@@ -11,7 +11,7 @@ const getApiBaseUrl = () => {
       const server = settings.apiServer || parts[0] || "localhost";
       const port = settings.apiPort || parts[1] || "5000";
 
-      return `http://${server}:${port}/api`;
+      return `https://${server}:${port}/api`;
     }
   } catch (error) {
     console.error("Error getting API settings:", error);
@@ -67,7 +67,7 @@ export const apiService = {
     try {
       // Build a temporary URL for testing
       // const testUrl = `https://${serverAddress}:${serverPort}/api/ping`;
-      const testUrl = `https://${serverAddress}/api/ping`;
+      const testUrl = `http://${serverAddress}:${serverPort}/api/ping`;
 
       console.log("Testing API connection at:", testUrl);
 
